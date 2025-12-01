@@ -1,0 +1,29 @@
+variable "project_id" {
+  description = "GCP Project ID"
+  type        = string
+}
+
+variable "project_name" {
+  description = "Project name prefix"
+  type        = string
+  default     = "ml-platform"
+}
+
+variable "region" {
+  description = "GCP region"
+  type        = string
+  default     = "us-central1"
+}
+
+variable "enable_gpu_pool" {
+  description = "Enable GPU node pool"
+  type        = bool
+  default     = false
+}
+
+variable "grafana_admin_password" {
+  description = "Initial Grafana admin password (will be stored in Secret Manager)"
+  type        = string
+  default     = "changeme-in-production"
+  sensitive   = true
+}

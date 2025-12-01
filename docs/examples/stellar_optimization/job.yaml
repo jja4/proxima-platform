@@ -1,0 +1,40 @@
+# Optional: Kubernetes job manifest
+# (You can also use: platform submit stellar_optimization:v1.0.0)
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: stellar-optimization
+  namespace: jobs
+  labels:
+    app: stellar-optimization
+spec:
+  # Auto-cleanup: delete job 24 hours after completion
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: stellar-optimization
+    spec:
+      restartPolicy: Never
+      serviceAccountName: job-runner
+      containers:
+      - name: worker
+        image: us-central1-docker.pkg.dev/PROJECT_ID/ml-platform-ml/stellar_optimization:latest
+        env:
+        - name: RAY_ADDRESS
+          value: "ray://ray-cluster-head-svc.ray-system.svc.cluster.local:10001"
+        - name: GCS_BUCKET
+          value: "gs://PROJECT_ID-ml-artifacts"
+        - name: NUM_CONFIGS
+          value: "100"
+        - name: MAX_ITER
+          value: "1000"
+        resources:
+          requests:
+            cpu: "4"
+            memory: "16Gi"
+          limits:
+            cpu: "8"
+            memory: "32Gi"

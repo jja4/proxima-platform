@@ -1,0 +1,415 @@
+# Constellaration ML Training Platform
+
+Production-grade platform for distributed ML training on GCP with Kubernetes and Ray.
+
+## 🚀 Quick Start
+
+### Local Development (No GCP Required)
+
+```bash
+# Open in VS Code → "Reopen in Container"
+# Then run training directly:
+python docs/examples/stellar_optimization/train.py
+```
+
+See [docs/QUICKSTART.md](docs/QUICKSTART.md) for full local dev setup.
+
+### GKE Production
+
+```bash
+# 1. Install uv (fast Python package manager)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. Install platform & dependencies
+uv sync && source .venv/bin/activate
+
+# 3. Deploy to GKE (see QUICKSTART.md for GCP setup)
+cd terraform/envs/dev && terraform apply
+
+# 4. Use CLI (requires GKE cluster)
+platform status
+platform build stellar_optimization v1.0.0
+platform submit stellar_optimization:v1.0.0
+```
+
+> **Note:** The `platform` CLI commands require a GKE cluster. For local dev, run Python directly.
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Google Cloud Platform                                       │
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │  GKE Cluster                                          │  │
+│  │                                                       │  │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐│  │
+│  │  │ Ray Head    │  │ Ray Workers │  │ Monitoring   ││  │
+│  │  │ (Dashboard) │  │ (CPU/GPU)   │  │ (Prom/Graf)  ││  │
+│  │  └─────────────┘  └─────────────┘  └──────────────┘│  │
+│  │                                                       │  │
+│  │  ┌─────────────────────────────────────────────────┐│  │
+│  │  │  Training Jobs (K8s Jobs)                       ││  │
+│  │  │  - Stellarator Optimization                     ││  │
+│  │  │  - Hyperparameter Tuning                        ││  │
+│  │  │  - Data Processing                              ││  │
+│  │  └─────────────────────────────────────────────────┘│  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌─────────────────┐  │
+│  │ Artifact     │  │ Cloud        │  │ Cloud           │  │
+│  │ Registry     │  │ Storage      │  │ Logging         │  │
+│  └──────────────┘  └──────────────┘  └─────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## 📁 Project Structure
+
+```
+constellaration-platform/
+├── .devcontainer/            # 🐳 VS Code dev container config
+│   ├── devcontainer.json    # Container settings, tools, extensions
+│   └── Dockerfile           # Container image
+├── platform/
+│   ├── bin/
+│   │   └── platform         # 🎯 Executable CLI script
+│   ├── cli/                 # CLI implementation
+│   │   ├── main.py         # Command dispatcher
+│   │   └── commands/       # Each command in its own module
+│   │       ├── status.py
+│   │       ├── submit.py
+│   │       ├── build.py
+│   │       ├── logs.py
+│   │       ├── scale.py
+│   │       ├── port_forward.py
+│   │       └── list_jobs.py
+│   └── sdk/                 # SDK for programmatic use
+│       └── core/            # Core SDK classes
+│           ├── client.py    # PlatformClient
+│           └── job.py       # Job class
+├── docs/
+│   ├── examples/            # 📚 Example workloads with documentation
+│   │   └── stellar_optimization/
+│   │       ├── README.md   # Complete guide
+│   │       ├── train.py    # Training code
+│   │       ├── Dockerfile  # Container definition
+│   │       └── job.yaml    # Kubernetes manifest
+│   ├── QUICKSTART.md       # Getting started guide
+│   └── GITHUB_ACTIONS_SETUP.md  # CI/CD setup
+├── terraform/               # Infrastructure as Code
+├── kubernetes/              # Kubernetes manifests
+├── pyproject.toml          # Project config (dependencies, build)
+└── uv.lock                 # Lock file (reproducible installs)
+```
+
+## 🎯 Why This Structure?
+
+### ✅ Modern Python Packaging
+- `pyproject.toml` - All config in one place
+- `uv sync` - Fast, reproducible installs with lock file
+- `uv add` - Easy dependency management
+
+### ✅ Clean Executable
+```bash
+platform status              # Clean! ✨
+# vs
+python -m platform.cli status  # Verbose 😕
+```
+
+### ✅ Fast Package Management (UV)
+```bash
+uv sync                      # 10-100x faster than pip! ⚡
+uv add package-name          # Add dependency to pyproject.toml
+```
+
+## 🛠 Installation
+
+### Option 1: Modern UV Workflow (Recommended)
+```bash
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# Or: brew install uv
+
+# Install platform (creates .venv, installs CLI)
+uv sync
+
+# Activate virtual environment
+source .venv/bin/activate  # macOS/Linux
+.venv\Scripts\activate     # Windows
+
+# Now 'platform' command is available
+platform status
+
+# With dev tools (pytest, black, ruff)
+uv sync --extra dev
+
+# With example dependencies (to run stellar_optimization)
+uv sync --extra examples
+```
+
+### Option 2: Legacy pip-compatible
+```bash
+pip install -e .
+platform status
+```
+
+### Option 3: Add bin/ to PATH (no venv)
+```bash
+export PATH="$PWD/platform/bin:$PATH"
+platform status
+```
+
+### Option 4: Dev Container (VS Code)
+```bash
+# Open in VS Code
+code .
+
+# Click "Reopen in Container"
+# Container auto-runs: uv sync --extra dev
+# Virtual env is auto-activated!
+
+platform status  # ✅ Just works!
+```
+
+## 🎮 CLI Commands (GKE Production)
+
+> **Note:** These commands require a deployed GKE cluster. For local development, run Python scripts directly.
+
+```bash
+platform status                           # Show platform health
+platform build <workload> <version>       # Build and push container
+platform submit <workload>:<version>      # Submit training job
+platform logs <job-name>                  # View job logs
+platform list                             # List all jobs
+platform scale <replicas>                 # Scale Ray workers
+platform port-forward [ray|grafana|all]   # Access dashboards
+```
+
+### Examples
+
+```bash
+# Build workload
+platform build stellar_optimization v1.0.0
+
+# Submit job
+platform submit stellar_optimization:v1.0.0
+
+# Monitor
+platform logs stellar-optimization-20251201-120000
+
+# Scale Ray cluster
+platform scale 20
+
+# Access dashboards
+platform port-forward ray      # Ray: http://localhost:8265
+platform port-forward grafana  # Grafana: http://localhost:3000
+platform port-forward all      # All dashboards
+```
+
+## 🐍 SDK Usage
+
+```python
+from platform.sdk import PlatformClient
+
+# Create client
+client = PlatformClient(project_id="your-project")
+
+# Submit job
+job = client.submit_job(
+    name="training",
+    image="us-central1-docker.pkg.dev/project/repo/model:v1",
+    cpu="8",
+    memory="32Gi",
+    env={"LEARNING_RATE": "0.001"}
+)
+
+# Monitor
+print(job.status())
+job.wait(timeout=3600)
+print(job.logs())
+
+# Scale platform
+client.scale_ray(replicas=20)
+```
+
+## 📦 Dependency Management
+
+### Add Dependencies
+```bash
+# Add runtime dependency
+uv add google-cloud-storage
+
+# Add dev dependency
+uv add --dev pytest
+
+# Install/update everything
+uv sync
+```
+
+### Lock Dependencies
+```bash
+# Update lock file
+uv lock --upgrade
+
+# Sync to lock file
+uv sync
+```
+
+### Remove Dependencies
+```bash
+uv remove package-name
+```
+
+## 🐳 Dev Container (VS Code)
+
+### What is a Dev Container?
+
+A Docker container with **everything pre-installed**:
+- Python 3.10 + UV
+- kubectl, helm, terraform, gcloud
+- Docker
+- VS Code extensions
+
+### Why Use It?
+
+✅ **Consistent environment** - Same tools/versions for everyone
+✅ **No local setup** - Everything in container
+✅ **Fast** - Uses UV for quick installs
+✅ **Pre-configured** - Ready to code immediately
+
+### How to Use
+
+```bash
+# 1. Open in VS Code
+code .
+
+# 2. Click "Reopen in Container"
+#    Container automatically runs: uv sync --extra dev
+
+# 3. Terminal opens with activated venv
+platform status    # ✅ Works!
+kubectl get nodes  # ✅ Works!
+uv add requests    # ✅ Works!
+```
+
+## 🚢 Deployment
+
+```bash
+# 1. Deploy infrastructure
+cd terraform/envs/dev
+terraform init
+terraform apply -var="project_id=YOUR_PROJECT"
+
+# 2. Connect to cluster
+gcloud container clusters get-credentials ml-platform-gke \
+  --region us-central1 --project YOUR_PROJECT
+
+# 3. Verify
+platform status
+```
+
+## 📚 Documentation
+
+- **[Quick Start](docs/QUICKSTART.md)** - Local dev & GCP deployment
+- **[GitHub Actions Setup](docs/GITHUB_ACTIONS_SETUP.md)** - CI/CD configuration
+- **[Example: Stellar Optimization](docs/examples/stellar_optimization/README.md)** - Full example workload
+
+## 🎓 Creating Your Own Workload
+
+```bash
+# 1. Copy example
+cp -r docs/examples/stellar_optimization docs/examples/my_workload
+
+# 2. Edit files
+vim docs/examples/my_workload/train.py
+vim docs/examples/my_workload/Dockerfile
+
+# 3. Build & submit
+platform build my_workload v1.0.0
+platform submit my_workload:v1.0.0
+
+# 4. Monitor
+platform logs my-workload-TIMESTAMP
+```
+
+## 📊 Monitoring
+
+```bash
+# Access dashboards
+platform port-forward ray       # localhost:8265
+platform port-forward grafana   # localhost:3000
+platform port-forward all       # All dashboards
+
+# Job monitoring
+platform list
+platform logs job-name
+platform status
+```
+
+## 🆘 Troubleshooting
+
+### Platform command not found
+```bash
+# Activate virtual environment
+source .venv/bin/activate
+
+# Or reinstall
+uv sync
+```
+
+### UV not found
+```bash
+# Install UV
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Add to PATH
+export PATH="$HOME/.cargo/bin:$PATH"
+```
+
+### Dependency conflicts
+```bash
+# Update and reinstall
+uv lock --upgrade
+uv sync
+```
+
+## ⚡ Why UV?
+
+**UV is 10-100x faster than pip:**
+
+```bash
+# Speed comparison
+time pip install ray[default]==2.9.0   # 45-60 seconds ⏱️
+time uv add ray[default]==2.9.0        # 5-10 seconds ⚡
+```
+
+**Modern workflow:**
+- `uv add package` - Add to pyproject.toml
+- `uv sync` - Install from lock file (reproducible!)
+- `uv lock --upgrade` - Update dependencies
+- Auto-creates and manages virtual environments
+
+**Benefits:**
+- ✅ Written in Rust (fast!)
+- ✅ Lock files for reproducible builds
+- ✅ Smart caching across projects
+- ✅ Better dependency resolution
+- ✅ Modern UX
+
+See **[docs/UV_GUIDE.md](docs/UV_GUIDE.md)** for complete guide.
+
+## 🏗 Infrastructure
+
+- **GCP**: GKE with autoscaling
+- **Kubernetes**: Ray operator, monitoring
+- **Ray**: Distributed computing
+- **Monitoring**: Prometheus + Grafana
+- **Storage**: Google Cloud Storage
+
+## 📄 License
+
+MIT
+
+---
+
+**Modern. Fast. Production-ready.** ⚡

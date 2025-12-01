@@ -1,0 +1,5 @@
+project_id             = "your-gcp-project-id"
+project_name           = "ml-platform"
+region                 = "us-central1"
+enable_gpu_pool        = false
+grafana_admin_password = "changeme-in-production"

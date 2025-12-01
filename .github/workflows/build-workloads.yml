@@ -1,0 +1,55 @@
+name: Build and Push Workloads
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'docs/examples/**'
+  workflow_dispatch:
+    inputs:
+      workload:
+        description: 'Workload to build (e.g., stellar_optimization)'
+        required: true
+        default: 'stellar_optimization'
+
+env:
+  REGION: us-central1
+
+jobs:
+  build-workload:
+    name: Build Workload Container
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        workload: [stellar_optimization]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+    
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+    
+    - name: Configure Docker for Artifact Registry
+      run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+    
+    - name: Build Docker image
+      run: |
+        cd docs/examples/${{ matrix.workload }}
+        docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-platform-ml/${{ matrix.workload }}:${{ github.sha }} .
+        docker tag ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-platform-ml/${{ matrix.workload }}:${{ github.sha }} \
+                   ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-platform-ml/${{ matrix.workload }}:latest
+    
+    - name: Push Docker image
+      run: |
+        docker push ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-platform-ml/${{ matrix.workload }}:${{ github.sha }}
+        docker push ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-platform-ml/${{ matrix.workload }}:latest
+    
+    - name: Image digest
+      run: |
+        echo "Image: ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ml-platform-ml/${{ matrix.workload }}:${{ github.sha }}"

@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: monitoring
+data:
+  ray-alerts.yaml: |
+    groups:
+    - name: ray_cluster
+      interval: 30s
+      rules:
+      - alert: RayClusterDown
+        expr: up{job="ray-head"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Ray cluster is down"
+          description: "Ray head node has been down for more than 5 minutes"
+      
+      - alert: RayHighMemoryUsage
+        expr: (ray_node_mem_used / ray_node_mem_total) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Ray node memory usage > 90%"
+          description: "Node {{ $labels.node_id }} memory usage is {{ $value }}%"
+      
+      - alert: RayNoWorkers
+        expr: count(ray_node_cpu_count{node_type="worker"}) < 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No Ray workers available"
+          description: "Ray cluster has no active worker nodes"
+  
+  job-alerts.yaml: |
+    groups:
+    - name: ml_jobs
+      interval: 30s
+      rules:
+      - alert: JobFailureRateHigh
+        expr: rate(kube_job_status_failed{namespace="jobs"}[1h]) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High job failure rate"
+          description: "More than 50% of jobs are failing in the last hour"
+      
+      - alert: JobStuck
+        expr: time() - kube_job_status_start_time{namespace="jobs"} > 7200
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Job running for >2 hours"
+          description: "Job {{ $labels.job_name }} has been running for more than 2 hours"
+      
+      - alert: PodOOMKilled
+        expr: kube_pod_container_status_terminated_reason{reason="OOMKilled",namespace="jobs"} > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pod killed due to OOM"
+          description: "Pod {{ $labels.pod }} was OOM killed. Increase memory limits."

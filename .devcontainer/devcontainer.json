@@ -1,0 +1,61 @@
+{
+  "name": "ML Platform Dev Container",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspace",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "upgradePackages": true
+    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+      "version": "latest",
+      "helm": "latest"
+    },
+    "ghcr.io/devcontainers/features/terraform:1": {
+      "version": "1.5.0"
+    },
+    "ghcr.io/devcontainers/features/google-cloud-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.10"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/workspace/.venv/bin/python",
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "[terraform]": {
+          "editor.defaultFormatter": "hashicorp.terraform",
+          "editor.formatOnSave": true
+        },
+        "[python]": {
+          "editor.formatOnSave": true
+        }
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "hashicorp.terraform",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "googlecloudtools.cloudcode",
+        "ms-azuretools.vscode-docker",
+        "GitHub.copilot",
+        "redhat.vscode-yaml"
+      ]
+    }
+  },
+  "forwardPorts": [8265, 3000, 9090, 9000, 9001],
+  "portsAttributes": {
+    "8265": { "label": "Ray Dashboard" },
+    "3000": { "label": "Grafana" },
+    "9090": { "label": "Prometheus" },
+    "9000": { "label": "MinIO API" },
+    "9001": { "label": "MinIO Console" }
+  },
+  "postCreateCommand": "uv sync --extra dev && echo '✅ Platform ready! Ray cluster, MinIO, and monitoring are running.' && echo '   Ray Dashboard: http://localhost:8265' && echo '   MinIO Console: http://localhost:9001' && echo '   Grafana:       http://localhost:3000'",
+  "remoteUser": "vscode"
+}

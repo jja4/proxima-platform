@@ -1,0 +1,102 @@
+apiVersion: ray.io/v1
+kind: RayCluster
+metadata:
+  name: ray-cluster
+  namespace: ray-system
+spec:
+  rayVersion: '2.9.0'
+  enableInTreeAutoscaling: true
+  
+  headGroupSpec:
+    rayStartParams:
+      dashboard-host: '0.0.0.0'
+      block: 'true'
+      num-cpus: '0'
+    
+    template:
+      spec:
+        containers:
+        - name: ray-head
+          image: rayproject/ray-ml:2.9.0-py310
+          ports:
+          - containerPort: 6379
+            name: gcs-server
+          - containerPort: 8265
+            name: dashboard
+          - containerPort: 10001
+            name: client
+          
+          resources:
+            requests:
+              cpu: "2"
+              memory: "8Gi"
+            limits:
+              cpu: "4"
+              memory: "16Gi"
+          
+          volumeMounts:
+          - name: log-volume
+            mountPath: /tmp/ray
+        
+        volumes:
+        - name: log-volume
+          emptyDir: {}
+        
+        nodeSelector:
+          workload: cpu
+  
+  workerGroupSpecs:
+  - groupName: cpu-workers
+    replicas: 2
+    minReplicas: 1
+    maxReplicas: 10
+    
+    rayStartParams:
+      block: 'true'
+      num-cpus: '4'
+    
+    template:
+      spec:
+        containers:
+        - name: ray-worker
+          image: rayproject/ray-ml:2.9.0-py310
+          
+          resources:
+            requests:
+              cpu: "4"
+              memory: "16Gi"
+            limits:
+              cpu: "8"
+              memory: "32Gi"
+          
+          volumeMounts:
+          - name: log-volume
+            mountPath: /tmp/ray
+        
+        volumes:
+        - name: log-volume
+          emptyDir: {}
+        
+        nodeSelector:
+          workload: cpu
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ray-cluster-head-svc
+  namespace: ray-system
+spec:
+  type: ClusterIP
+  selector:
+    ray.io/cluster: ray-cluster
+    ray.io/node-type: head
+  ports:
+  - name: gcs-server
+    port: 6379
+    targetPort: 6379
+  - name: dashboard
+    port: 8265
+    targetPort: 8265
+  - name: client
+    port: 10001
+    targetPort: 10001

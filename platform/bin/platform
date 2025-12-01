@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+"""
+Platform CLI executable
+
+Usage: platform <command> [args]
+"""
+import sys
+import os
+
+# Add project root to Python path (go up 2 levels: bin -> platform -> root)
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, project_root)
+
+from platform.cli import main
+
+if __name__ == '__main__':
+    main()

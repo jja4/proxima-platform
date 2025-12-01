@@ -1,0 +1,157 @@
+# Dev Container with Local ML Platform Services
+# Provides: IDE environment + Ray cluster + MinIO + Monitoring
+
+version: '3.8'
+
+services:
+  # ==========================================================================
+  # Dev Container (VS Code development environment)
+  # ==========================================================================
+  devcontainer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspace:cached
+      - ~/.config/gcloud:/home/vscode/.config/gcloud:ro
+      - ~/.kube:/home/vscode/.kube:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: sleep infinity
+    networks:
+      - ml-platform
+    environment:
+      - RAY_ADDRESS=ray://ray-head:10001
+      - MINIO_ENDPOINT=http://minio:9000
+      - LOCAL_DEV=true
+
+  # ==========================================================================
+  # Ray Cluster (Local)
+  # ==========================================================================
+  ray-head:
+    image: rayproject/ray-ml:2.9.0-py310
+    container_name: ray-head
+    command: >
+      ray start --head --port=6379 --dashboard-host=0.0.0.0 --block
+    ports:
+      - "8265:8265"   # Ray Dashboard
+      - "6379:6379"   # Ray GCS
+      - "10001:10001" # Ray Client
+    environment:
+      - RAY_DISABLE_DOCKER_CPU_WARNING=1
+    volumes:
+      - ray-data:/tmp/ray
+      - ../docs/examples:/workspace/examples:ro
+    networks:
+      - ml-platform
+    healthcheck:
+      test: ["CMD", "ray", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ray-worker:
+    image: rayproject/ray-ml:2.9.0-py310
+    command: >
+      ray start --address=ray-head:6379 --block
+    environment:
+      - RAY_DISABLE_DOCKER_CPU_WARNING=1
+    volumes:
+      - ray-data:/tmp/ray
+    networks:
+      - ml-platform
+    depends_on:
+      ray-head:
+        condition: service_healthy
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+
+  # ==========================================================================
+  # MinIO (Local S3-compatible storage, replaces GCS)
+  # ==========================================================================
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"   # MinIO API
+      - "9001:9001"   # MinIO Console
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio-data:/data
+    networks:
+      - ml-platform
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Create default bucket
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 minioadmin minioadmin;
+      mc mb local/ml-artifacts --ignore-existing;
+      mc anonymous set public local/ml-artifacts;
+      echo 'Bucket ml-artifacts created successfully';
+      "
+    networks:
+      - ml-platform
+
+  # ==========================================================================
+  # Prometheus (Monitoring)
+  # ==========================================================================
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    networks:
+      - ml-platform
+
+  # ==========================================================================
+  # Grafana (Dashboards)
+  # ==========================================================================
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - ml-platform
+    depends_on:
+      - prometheus
+
+volumes:
+  ray-data:
+  minio-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  ml-platform:
+    driver: bridge
