@@ -19,7 +19,7 @@ terraform {
 
   backend "gcs" {
     bucket = "SET_YOUR_BUCKET_NAME"  # Update this
-    prefix = "constellaration-platform/dev"
+    prefix = "proxima-platform/dev"
   }
 }
 

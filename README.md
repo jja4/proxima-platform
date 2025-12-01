@@ -4,76 +4,70 @@ Production-grade platform for distributed ML training on GCP with Kubernetes and
 
 ## 🚀 Quick Start
 
-### Local Development (No GCP Required)
+### Open in Dev Container (Recommended)
+
+The dev container is your complete development environment with all tools pre-installed.
 
 ```bash
-# Open in VS Code → "Reopen in Container"
-# Then run training directly:
-python docs/examples/stellar_optimization/train.py
+# 1. Open repo in VS Code
+# 2. Click "Reopen in Container" when prompted
+# 3. Everything is ready - local Ray cluster, monitoring, CLI tools
 ```
 
-See [docs/QUICKSTART.md](docs/QUICKSTART.md) for full local dev setup.
-
-### GKE Production
+**From inside the dev container, you can:**
 
 ```bash
-# 1. Install uv (fast Python package manager)
-curl -LsSf https://astral.sh/uv/install.sh | sh
+# LOCAL: Test training code (no GCP needed)
+python docs/examples/stellar_optimization/train.py
 
-# 2. Install platform & dependencies
-uv sync && source .venv/bin/activate
-
-# 3. Deploy to GKE (see QUICKSTART.md for GCP setup)
+# PRODUCTION: Deploy to GKE and submit jobs
+gcloud auth login
 cd terraform/envs/dev && terraform apply
-
-# 4. Use CLI (requires GKE cluster)
-platform status
-platform build stellar_optimization v1.0.0
 platform submit stellar_optimization:v1.0.0
 ```
 
-> **Note:** The `platform` CLI commands require a GKE cluster. For local dev, run Python directly.
+See **[docs/QUICKSTART.md](docs/QUICKSTART.md)** for complete setup guide.
 
 ## 🏗️ Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Google Cloud Platform                                       │
-│                                                              │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │  GKE Cluster                                          │  │
-│  │                                                       │  │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐│  │
-│  │  │ Ray Head    │  │ Ray Workers │  │ Monitoring   ││  │
-│  │  │ (Dashboard) │  │ (CPU/GPU)   │  │ (Prom/Graf)  ││  │
-│  │  └─────────────┘  └─────────────┘  └──────────────┘│  │
-│  │                                                       │  │
-│  │  ┌─────────────────────────────────────────────────┐│  │
-│  │  │  Training Jobs (K8s Jobs)                       ││  │
-│  │  │  - Stellarator Optimization                     ││  │
-│  │  │  - Hyperparameter Tuning                        ││  │
-│  │  │  - Data Processing                              ││  │
-│  │  └─────────────────────────────────────────────────┘│  │
-│  └──────────────────────────────────────────────────────┘  │
-│                                                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌─────────────────┐  │
-│  │ Artifact     │  │ Cloud        │  │ Cloud           │  │
-│  │ Registry     │  │ Storage      │  │ Logging         │  │
-│  └──────────────┘  └──────────────┘  └─────────────────┘  │
+│  Google Cloud Platform                                      │
+│                                                             │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │  GKE Cluster                                         │   │
+│  │                                                      │   │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐  │   │
+│  │  │ Ray Head    │  │ Ray Workers │  │ Monitoring   │. │   │
+│  │  │ (Dashboard) │  │ (CPU/GPU)   │  │ (Prom/Graf)  │. │   │
+│  │  └─────────────┘  └─────────────┘  └──────────────┘  │   │
+│  │                                                      │   │
+│  │  ┌─────────────────────────────────────────────────┐ │   │
+│  │  │  Training Jobs (K8s Jobs)                       │ │   │
+│  │  │  - Stellarator Optimization                     │ │   │
+│  │  │  - Hyperparameter Tuning                        │ │   │
+│  │  │  - Data Processing                              │ │   │
+│  │  └─────────────────────────────────────────────────┘ │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                                                             │
+│  ┌──────────────┐  ┌──────────────┐  ┌─────────────────┐    │
+│  │ Artifact     │  │ Cloud        │  │ Cloud           │    │
+│  │ Registry     │  │ Storage      │  │ Logging         │    │
+│  └──────────────┘  └──────────────┘  └─────────────────┘    │ 
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ## 📁 Project Structure
 
 ```
-constellaration-platform/
-├── .devcontainer/            # 🐳 VS Code dev container config
-│   ├── devcontainer.json    # Container settings, tools, extensions
-│   └── Dockerfile           # Container image
+proxima-platform/
+├── .devcontainer/          # 🐳 VS Code dev container config
+│   ├── devcontainer.json   # Container settings, tools, extensions
+│   └── Dockerfile          # Container image
 ├── platform/
 │   ├── bin/
-│   │   └── platform         # 🎯 Executable CLI script
-│   ├── cli/                 # CLI implementation
+│   │   └── platform        # 🎯 Executable CLI script
+│   ├── cli/                # CLI implementation
 │   │   ├── main.py         # Command dispatcher
 │   │   └── commands/       # Each command in its own module
 │   │       ├── status.py
@@ -83,21 +77,21 @@ constellaration-platform/
 │   │       ├── scale.py
 │   │       ├── port_forward.py
 │   │       └── list_jobs.py
-│   └── sdk/                 # SDK for programmatic use
-│       └── core/            # Core SDK classes
-│           ├── client.py    # PlatformClient
-│           └── job.py       # Job class
+│   └── sdk/                # SDK for programmatic use
+│       └── core/           # Core SDK classes
+│           ├── client.py   # PlatformClient
+│           └── job.py      # Job class
 ├── docs/
-│   ├── examples/            # 📚 Example workloads with documentation
+│   ├── examples/           # 📚 Example workloads with documentation
 │   │   └── stellar_optimization/
 │   │       ├── README.md   # Complete guide
 │   │       ├── train.py    # Training code
 │   │       ├── Dockerfile  # Container definition
 │   │       └── job.yaml    # Kubernetes manifest
 │   ├── QUICKSTART.md       # Getting started guide
-│   └── GITHUB_ACTIONS_SETUP.md  # CI/CD setup
-├── terraform/               # Infrastructure as Code
-├── kubernetes/              # Kubernetes manifests
+│   └── GITHUB_ACTIONS.md   # CI/CD setup
+├── terraform/              # Infrastructure as Code
+├── kubernetes/             # Kubernetes manifests
 ├── pyproject.toml          # Project config (dependencies, build)
 └── uv.lock                 # Lock file (reproducible installs)
 ```

@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test & Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+nosetests.xml
+coverage.xml
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/envs/*/.terraform/
+terraform/envs/*/.terraform.lock.hcl
+terraform/envs/*/terraform.tfstate
+terraform/envs/*/terraform.tfstate.backup
+terraform/envs/*/terraform.tfvars
+terraform/modules/**/.terraform/
+terraform/modules/**/.terraform.lock.hcl
+
+# Sensitive Files (NEVER commit these)
+terraform-key.json
+terraform-key-*.json
+*.key
+*.pem
+credentials.json
+gcp-keys/
+secrets/
+
+# Build artifacts
+.next/
+dist/
+build/
+
+# Keep example/template files
+!terraform/envs/*/terraform.tfvars.example
+!.env.example

@@ -1,5 +1,5 @@
 [project]
-name = "constellaration-platform"
+name = "proxima-platform"
 version = "1.0.0"
 description = "ML training platform for GCP with Kubernetes and Ray"
 readme = "README.md"
