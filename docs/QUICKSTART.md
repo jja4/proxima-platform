@@ -108,7 +108,7 @@ When you're ready for production: autoscaling, GPUs, and persistent storage.
 ```bash
 # Set your project ID
 export PROJECT_ID="your-gcp-project-id"
-export REGION="us-central1"
+export REGION="europe-west3"
 
 # Option A: Interactive login (opens browser)
 gcloud auth login
@@ -143,7 +143,7 @@ Edit `terraform.tfvars`:
 ```hcl
 project_id             = "your-gcp-project-id"  # ← Your GCP project ID
 project_name           = "ml-platform"
-region                 = "us-central1"
+region                 = "europe-west3"
 enable_gpu_pool        = false                   # Set true if you need GPUs
 grafana_admin_password = "your-secure-password"
 ```

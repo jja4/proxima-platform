@@ -14,10 +14,10 @@ DEFAULT_TTL_SECONDS = 86400
 class PlatformClient:
     """Client for interacting with the ML platform"""
     
-    def __init__(self, project_id: str, region: str = "us-central1"):
+    def __init__(self, project_id: str, region: str = "europe-west3"):
         self.project_id = project_id
         self.region = region
-        self.registry = f"{region}-docker.pkg.dev/{project_id}/ml-platform-ml"
+        self.registry = f"{region}-docker.pkg.dev/{project_id}/ml-platform"
     
     def submit_job(
         self,

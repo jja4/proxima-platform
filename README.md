@@ -211,7 +211,7 @@ client = PlatformClient(project_id="your-project")
 # Submit job
 job = client.submit_job(
     name="training",
-    image="us-central1-docker.pkg.dev/project/repo/model:v1",
+    image="europe-west3-docker.pkg.dev/project/repo/model:v1",
     cpu="8",
     memory="32Gi",
     env={"LEARNING_RATE": "0.001"}
@@ -296,7 +296,7 @@ terraform apply -var="project_id=YOUR_PROJECT"
 
 # 2. Connect to cluster
 gcloud container clusters get-credentials ml-platform-gke \
-  --region us-central1 --project YOUR_PROJECT
+  --region europe-west3 --project YOUR_PROJECT
 
 # 3. Verify
 platform status

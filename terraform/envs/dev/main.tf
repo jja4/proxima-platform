@@ -103,7 +103,7 @@ module "gke" {
 # Artifact Registry
 resource "google_artifact_registry_repository" "ml_images" {
   location      = var.region
-  repository_id = "${var.project_name}-ml"
+  repository_id = var.project_name
   format        = "DOCKER"
   description   = "ML training container images"
 

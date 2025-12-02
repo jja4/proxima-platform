@@ -42,9 +42,9 @@ def run(args):
         print(f"❌ No Dockerfile in {workload_dir}")
         sys.exit(1)
     
-    region = "us-central1"
-    image = f"{region}-docker.pkg.dev/{project_id}/ml-platform-ml/{workload}:{version}"
-    image_latest = f"{region}-docker.pkg.dev/{project_id}/ml-platform-ml/{workload}:latest"
+    region = "europe-west3"
+    image = f"{region}-docker.pkg.dev/{project_id}/ml-platform/{workload}:{version}"
+    image_latest = f"{region}-docker.pkg.dev/{project_id}/ml-platform/{workload}:latest"
     
     print(f"🔨 Building: {workload}")
     print(f"📦 Version: {version}")

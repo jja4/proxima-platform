@@ -12,7 +12,7 @@ variable "project_name" {
 variable "region" {
   description = "GCP region"
   type        = string
-  default     = "us-central1"
+  default     = "europe-west3"
 }
 
 variable "enable_gpu_pool" {

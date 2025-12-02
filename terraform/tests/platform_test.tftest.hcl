@@ -8,7 +8,7 @@
 variables {
   project_id             = "test-project-id"
   project_name           = "ml-platform"
-  region                 = "us-central1"
+  region                 = "europe-west3"
   enable_gpu_pool        = false
   grafana_admin_password = "test-password"
 }
@@ -27,7 +27,7 @@ run "vpc_network_creation" {
   variables {
     project_id   = "test-project-id"
     project_name = "ml-platform"
-    region       = "us-central1"
+    region       = "europe-west3"
     subnet_cidr  = "10.0.0.0/20"
     pods_cidr    = "10.4.0.0/14"
     services_cidr = "10.8.0.0/20"
@@ -54,7 +54,7 @@ run "vpc_subnet_configuration" {
   variables {
     project_id   = "test-project-id"
     project_name = "ml-platform"
-    region       = "us-central1"
+    region       = "europe-west3"
     subnet_cidr  = "10.0.0.0/20"
     pods_cidr    = "10.4.0.0/14"
     services_cidr = "10.8.0.0/20"
@@ -86,7 +86,7 @@ run "vpc_nat_configuration" {
   variables {
     project_id   = "test-project-id"
     project_name = "ml-platform"
-    region       = "us-central1"
+    region       = "europe-west3"
     subnet_cidr  = "10.0.0.0/20"
     pods_cidr    = "10.4.0.0/14"
     services_cidr = "10.8.0.0/20"
@@ -117,7 +117,7 @@ run "gke_cluster_configuration" {
   variables {
     project_id            = "test-project-id"
     project_name          = "ml-platform"
-    region                = "us-central1"
+    region                = "europe-west3"
     environment           = "dev"
     network_name          = "ml-platform-vpc"
     subnet_name           = "ml-platform-gke-subnet"
@@ -157,7 +157,7 @@ run "gke_cpu_node_pool" {
   variables {
     project_id            = "test-project-id"
     project_name          = "ml-platform"
-    region                = "us-central1"
+    region                = "europe-west3"
     environment           = "dev"
     network_name          = "ml-platform-vpc"
     subnet_name           = "ml-platform-gke-subnet"
@@ -207,7 +207,7 @@ run "gke_workload_identity_enabled" {
   variables {
     project_id            = "test-project-id"
     project_name          = "ml-platform"
-    region                = "us-central1"
+    region                = "europe-west3"
     environment           = "dev"
     network_name          = "ml-platform-vpc"
     subnet_name           = "ml-platform-gke-subnet"
@@ -237,7 +237,7 @@ run "gke_gpu_pool_disabled_by_default" {
   variables {
     project_id            = "test-project-id"
     project_name          = "ml-platform"
-    region                = "us-central1"
+    region                = "europe-west3"
     environment           = "dev"
     network_name          = "ml-platform-vpc"
     subnet_name           = "ml-platform-gke-subnet"
@@ -267,7 +267,7 @@ run "gke_gpu_pool_enabled" {
   variables {
     project_id            = "test-project-id"
     project_name          = "ml-platform"
-    region                = "us-central1"
+    region                = "europe-west3"
     environment           = "dev"
     network_name          = "ml-platform-vpc"
     subnet_name           = "ml-platform-gke-subnet"

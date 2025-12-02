@@ -6,4 +6,4 @@ metadata:
 data:
   ray_address: "ray://ray-cluster-head-svc.ray-system.svc.cluster.local:10001"
   gcs_bucket: "gs://PROJECT_ID-ml-artifacts"
-  artifact_registry: "us-central1-docker.pkg.dev/PROJECT_ID/ml-platform-ml"
+  artifact_registry: "europe-west3-docker.pkg.dev/PROJECT_ID/ml-platform"

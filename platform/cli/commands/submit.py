@@ -47,8 +47,8 @@ def run(args):
         print("❌ No GCP project configured. Run: gcloud config set project PROJECT_ID")
         sys.exit(1)
     
-    region = "us-central1"
-    image = f"{region}-docker.pkg.dev/{project_id}/ml-platform-ml/{workload}:{version}"
+    region = "europe-west3"
+    image = f"{region}-docker.pkg.dev/{project_id}/ml-platform/{workload}:{version}"
     job_name = f"{workload}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
     
     print(f"🚀 Submitting: {job_name}")
