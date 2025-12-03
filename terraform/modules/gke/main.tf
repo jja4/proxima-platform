@@ -91,8 +91,8 @@ resource "google_container_node_pool" "cpu_pool" {
     machine_type    = var.cpu_machine_type
     preemptible     = var.use_preemptible
     service_account = var.service_account_email
-    disk_size_gb    = 100
-    disk_type       = "pd-standard"
+    disk_size_gb    = 30          # Minimum viable for GKE
+    disk_type       = "pd-standard"  # Cheapest disk type
 
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform"

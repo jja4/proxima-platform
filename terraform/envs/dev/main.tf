@@ -18,8 +18,8 @@ terraform {
   }
 
   backend "gcs" {
-    bucket = "SET_YOUR_BUCKET_NAME"  # Update this
-    prefix = "proxima-platform/dev"
+    bucket = "SET_YOUR_BUCKET_NAME"  # This will be replaced during 'terraform init -backend-config="bucket=${PROJECT_ID}-terraform-state"'
+    prefix = "dev"
   }
 }
 
@@ -90,11 +90,11 @@ module "gke" {
   services_range_name   = module.vpc.services_range_name
   service_account_email = google_service_account.gke_nodes.email
 
-  # Dev configuration
-  cpu_machine_type  = "n2-standard-4"
-  cpu_min_nodes     = 1
-  cpu_max_nodes     = 5
-  use_preemptible   = true
+  # Minimal dev configuration
+  cpu_machine_type  = "e2-small"      # 0.5 vCPU, 2GB RAM (~$12/mo)
+  cpu_min_nodes     = 1               # Need at least 1 for system pods
+  cpu_max_nodes     = 2               # Scale up to 2 if needed
+  use_preemptible   = true            # 60-80% cheaper
   enable_gpu_pool   = false
 
   depends_on = [module.vpc]
@@ -135,17 +135,21 @@ resource "google_storage_bucket" "ml_artifacts" {
 # Configure kubectl
 data "google_client_config" "default" {}
 
+# Use try() to allow terraform plan to succeed before the cluster exists.
+# The kubernetes/helm providers will receive dummy values during initial plan,
+# but all k8s resources have depends_on = [module.gke] so they won't be created
+# until the cluster is ready.
 provider "kubernetes" {
-  host                   = "https://${module.gke.cluster_endpoint}"
-  token                  = data.google_client_config.default.access_token
-  cluster_ca_certificate = base64decode(module.gke.cluster_ca_certificate)
+  host                   = try("https://${module.gke.cluster_endpoint}", null)
+  token                  = try(data.google_client_config.default.access_token, null)
+  cluster_ca_certificate = try(base64decode(module.gke.cluster_ca_certificate), null)
 }
 
 provider "helm" {
   kubernetes {
-    host                   = "https://${module.gke.cluster_endpoint}"
-    token                  = data.google_client_config.default.access_token
-    cluster_ca_certificate = base64decode(module.gke.cluster_ca_certificate)
+    host                   = try("https://${module.gke.cluster_endpoint}", null)
+    token                  = try(data.google_client_config.default.access_token, null)
+    cluster_ca_certificate = try(base64decode(module.gke.cluster_ca_certificate), null)
   }
 }
 
@@ -281,73 +285,95 @@ resource "google_service_account_iam_member" "workload_identity_binding" {
 # Ray Cluster Deployment
 # =============================================================================
 
-# Deploy RayCluster after KubeRay operator is ready
-resource "kubernetes_manifest" "ray_cluster" {
-  manifest = {
-    apiVersion = "ray.io/v1"
-    kind       = "RayCluster"
-    metadata = {
-      name      = "ray-cluster"
-      namespace = kubernetes_namespace.namespaces["ray-system"].metadata[0].name
-    }
-    spec = {
-      rayVersion             = "2.9.0"
-      enableInTreeAutoscaling = true
+# Deploy RayCluster using the official KubeRay Helm chart
+# This avoids YAML and the kubernetes_manifest provider issues
+resource "helm_release" "ray_cluster" {
+  name       = "ray-cluster"
+  repository = "https://ray-project.github.io/kuberay-helm/"
+  chart      = "ray-cluster"
+  version    = "1.1.0"
+  namespace  = kubernetes_namespace.namespaces["ray-system"].metadata[0].name
 
-      headGroupSpec = {
-        rayStartParams = {
-          "dashboard-host" = "0.0.0.0"
-          "block"          = "true"
-          "num-cpus"       = "0"
-        }
-        template = {
-          spec = {
-            containers = [{
-              name  = "ray-head"
-              image = "rayproject/ray-ml:2.9.0-py310"
-              ports = [
-                { containerPort = 6379, name = "gcs-server" },
-                { containerPort = 8265, name = "dashboard" },
-                { containerPort = 10001, name = "client" }
-              ]
-              resources = {
-                requests = { cpu = "2", memory = "8Gi" }
-                limits   = { cpu = "4", memory = "16Gi" }
-              }
-              volumeMounts = [{ name = "log-volume", mountPath = "/tmp/ray" }]
-            }]
-            volumes = [{ name = "log-volume", emptyDir = {} }]
-            nodeSelector = { workload = "cpu" }
-          }
-        }
-      }
+  set {
+    name  = "image.tag"
+    value = "2.9.0-py310"
+  }
 
-      workerGroupSpecs = [{
-        groupName   = "cpu-workers"
-        replicas    = 2
-        minReplicas = 1
-        maxReplicas = 10
-        rayStartParams = {
-          "block"    = "true"
-          "num-cpus" = "4"
-        }
-        template = {
-          spec = {
-            containers = [{
-              name  = "ray-worker"
-              image = "rayproject/ray-ml:2.9.0-py310"
-              resources = {
-                requests = { cpu = "4", memory = "16Gi" }
-                limits   = { cpu = "8", memory = "32Gi" }
-              }
-              volumeMounts = [{ name = "log-volume", mountPath = "/tmp/ray" }]
-            }]
-            volumes = [{ name = "log-volume", emptyDir = {} }]
-            nodeSelector = { workload = "cpu" }
-          }
-        }
-      }]
-    }
+  set {
+    name  = "image.repository"
+    value = "rayproject/ray-ml"
+  }
+
+  # Head node configuration (minimal for e2-small nodes)
+  set {
+    name  = "head.rayStartParams.dashboard-host"
+    value = "0.0.0.0"
+  }
+
+  set {
+    name  = "head.rayStartParams.num-cpus"
+    value = "0"  # Head doesn't run tasks, just coordinates
+  }
+
+  set {
+    name  = "head.resources.requests.cpu"
+    value = "200m"
+  }
+
+  set {
+    name  = "head.resources.requests.memory"
+    value = "512Mi"
+  }
+
+  set {
+    name  = "head.resources.limits.cpu"
+    value = "500m"
+  }
+
+  set {
+    name  = "head.resources.limits.memory"
+    value = "1Gi"
+  }
+
+  # Worker configuration (minimal)
+  set {
+    name  = "worker.replicas"
+    value = "0"  # Start with 0, scale up when needed
+  }
+
+  set {
+    name  = "worker.minReplicas"
+    value = "0"
+  }
+
+  set {
+    name  = "worker.maxReplicas"
+    value = "1"
+  }
+
+  set {
+    name  = "worker.rayStartParams.num-cpus"
+    value = "1"
+  }
+
+  set {
+    name  = "worker.resources.requests.cpu"
+    value = "200m"
+  }
+
+  set {
+    name  = "worker.resources.requests.memory"
+    value = "512Mi"
+  }
+
+  set {
+    name  = "worker.resources.limits.cpu"
+    value = "500m"
+  }
+
+  set {
+    name  = "worker.resources.limits.memory"
+    value = "1Gi"
   }
 
   depends_on = [helm_release.kuberay_operator]
@@ -383,7 +409,7 @@ resource "kubernetes_service" "ray_head" {
     }
   }
 
-  depends_on = [kubernetes_manifest.ray_cluster]
+  depends_on = [helm_release.ray_cluster]
 }
 
 # =============================================================================
@@ -398,12 +424,13 @@ resource "kubernetes_resource_quota" "jobs_quota" {
 
   spec {
     hard = {
-      "requests.cpu"    = "100"
-      "requests.memory" = "400Gi"
-      "limits.cpu"      = "200"
-      "limits.memory"   = "800Gi"
-      "pods"            = "100"
-      "count/jobs.batch" = "50"
+      # Minimal quotas for e2-small cluster (0.5 vCPU, 2GB per node)
+      "requests.cpu"    = "1"
+      "requests.memory" = "2Gi"
+      "limits.cpu"      = "2"
+      "limits.memory"   = "4Gi"
+      "pods"            = "10"
+      "count/jobs.batch" = "5"
     }
   }
 
@@ -414,7 +441,7 @@ resource "kubernetes_resource_quota" "jobs_quota" {
 # Network Policies
 # =============================================================================
 
-# Network policy for jobs namespace - allow egress to Ray and monitoring
+# Network policy for jobs namespace
 resource "kubernetes_network_policy" "jobs_policy" {
   metadata {
     name      = "jobs-network-policy"
@@ -423,22 +450,62 @@ resource "kubernetes_network_policy" "jobs_policy" {
 
   spec {
     pod_selector {}
-
     policy_types = ["Ingress", "Egress"]
 
-    # Allow all egress (to Ray cluster, GCS, etc.)
+    # Allow egress to Ray cluster (by namespace)
     egress {
-      to {}
+      to {
+        namespace_selector {
+          match_labels = {
+            "kubernetes.io/metadata.name" = "ray-system"
+          }
+        }
+      }
+      ports {
+        protocol = "TCP"
+        port     = "10001"  # Ray client port
+      }
     }
 
-    # Deny all ingress by default (jobs don't need incoming connections)
+    # Allow DNS (required for all namespaces)
+    egress {
+      to {
+        namespace_selector {
+          match_labels = {
+            "kubernetes.io/metadata.name" = "kube-system"
+          }
+        }
+      }
+      ports {
+        protocol = "UDP"
+        port     = "53"  # DNS
+      }
+    }
+
+    # Allow external HTTPS (for downloading models, packages, etc.)
+    egress {
+      to {
+        ip_block {
+          cidr = "0.0.0.0/0"
+          except = [
+            "169.254.169.254/32"  # Block metadata service
+          ]
+        }
+      }
+      ports {
+        protocol = "TCP"
+        port     = "443"  # HTTPS
+      }
+    }
+
+    # Deny all ingress (jobs don't receive inbound traffic)
     ingress {}
   }
 
   depends_on = [kubernetes_namespace.namespaces]
 }
 
-# Network policy for ray-system - allow from jobs namespace
+# Network policy for ray-system
 resource "kubernetes_network_policy" "ray_policy" {
   metadata {
     name      = "ray-network-policy"
@@ -447,9 +514,9 @@ resource "kubernetes_network_policy" "ray_policy" {
 
   spec {
     pod_selector {}
-
     policy_types = ["Ingress", "Egress"]
 
+    # Allow ingress from jobs namespace
     ingress {
       from {
         namespace_selector {
@@ -458,6 +525,14 @@ resource "kubernetes_network_policy" "ray_policy" {
           }
         }
       }
+      ports {
+        protocol = "TCP"
+        port     = "10001"  # Ray client port
+      }
+    }
+
+    # Allow ingress from ray-system (head to workers)
+    ingress {
       from {
         namespace_selector {
           match_labels = {
@@ -465,10 +540,69 @@ resource "kubernetes_network_policy" "ray_policy" {
           }
         }
       }
+      ports {
+        protocol = "TCP"
+        port     = "6379"   # GCS server
+      }
+      ports {
+        protocol = "TCP"
+        port     = "8265"   # Dashboard
+      }
+      ports {
+        protocol = "TCP"
+        port     = "10001"  # Client
+      }
     }
 
+    # Allow DNS
     egress {
-      to {}
+      to {
+        namespace_selector {
+          match_labels = {
+            "kubernetes.io/metadata.name" = "kube-system"
+          }
+        }
+      }
+      ports {
+        protocol = "UDP"
+        port     = "53"
+      }
+    }
+
+    # Allow Ray-to-Ray communication
+    egress {
+      to {
+        namespace_selector {
+          match_labels = {
+            "kubernetes.io/metadata.name" = "ray-system"
+          }
+        }
+      }
+      ports {
+        protocol = "TCP"
+        port     = "6379"
+      }
+      ports {
+        protocol = "TCP"
+        port     = "8265"
+      }
+      ports {
+        protocol = "TCP"
+        port     = "10001"
+      }
+    }
+
+    # Allow external HTTPS (for pip install, model downloads, etc.)
+    egress {
+      to {
+        ip_block {
+          cidr = "0.0.0.0/0"
+        }
+      }
+      ports {
+        protocol = "TCP"
+        port     = "443"
+      }
     }
   }
 

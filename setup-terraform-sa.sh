@@ -1,10 +1,42 @@
 #!/bin/bash
 set -e
 
-PROJECT_ID="proxima-platform-479922"
+if [ -z "$PROJECT_ID" ]; then
+  echo "Error: PROJECT_ID environment variable is not set."
+  echo "Please set PROJECT_ID to your GCP project ID and rerun the script."
+  exit 1
+fi
+echo "Authenticating with gcloud..."
+gcloud auth login
+
+
+PROJECT_ID="${PROJECT_ID}"
 SA_NAME="terraform-sa"
 SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 
+echo "Using project: $PROJECT_ID"
+echo ""
+echo "Enabling required APIs..."
+
+APIS=(
+  "cloudresourcemanager.googleapis.com"
+  "compute.googleapis.com"
+  "container.googleapis.com"
+  "artifactregistry.googleapis.com"
+  "storage.googleapis.com"
+  "iam.googleapis.com"
+  "secretmanager.googleapis.com"
+  "logging.googleapis.com"
+  "monitoring.googleapis.com"
+)
+
+for api in "${APIS[@]}"; do
+  echo "Enabling: $api"
+  gcloud services enable $api --project=$PROJECT_ID
+done
+
+echo "APIs enabled"
+echo ""
 echo "Creating service account: $SA_EMAIL"
 
 gcloud iam service-accounts create $SA_NAME \
@@ -23,6 +55,7 @@ ROLES=(
   "roles/iam.serviceAccountAdmin"
   "roles/iam.serviceAccountKeyAdmin"
   "roles/iam.securityAdmin"
+  "roles/iam.serviceAccountUser" 
   "roles/monitoring.admin"
   "roles/secretmanager.admin"
   "roles/logging.admin"
@@ -38,6 +71,15 @@ for role in "${ROLES[@]}"; do
 done
 
 echo "All roles granted"
+echo ""
+echo "Granting Terraform SA permission to use service accounts at project level..."
+# This allows Terraform to use any service account in the project (both existing and ones it creates)
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:${SA_EMAIL}" \
+  --role="roles/iam.serviceAccountUser" \
+  --quiet
+
+echo "Service account usage permission granted"
 echo "Creating service account key..."
 
 gcloud iam service-accounts keys create terraform-key.json \
