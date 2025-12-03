@@ -11,7 +11,8 @@ spec:
     rayStartParams:
       dashboard-host: '0.0.0.0'
       block: 'true'
-      num-cpus: '0'
+      # head should advertise 1 CPU to match the head container request
+      num-cpus: '1'
     
     template:
       spec:
@@ -28,11 +29,12 @@ spec:
           
           resources:
             requests:
-              cpu: "2"
-              memory: "8Gi"
+              cpu: "1"
+              memory: "2Gi"
             limits:
-              cpu: "4"
-              memory: "16Gi"
+              # set CPU limit equal to request for predictable scheduling on small dev nodes
+              cpu: "1"
+              memory: "4Gi"
           
           volumeMounts:
           - name: log-volume
@@ -47,13 +49,14 @@ spec:
   
   workerGroupSpecs:
   - groupName: cpu-workers
-    replicas: 2
-    minReplicas: 1
-    maxReplicas: 10
+    replicas: 1
+    minReplicas: 0
+    maxReplicas: 2
     
     rayStartParams:
       block: 'true'
-      num-cpus: '4'
+      # match the worker container request of 1 CPU
+      num-cpus: '1'
     
     template:
       spec:
@@ -63,11 +66,12 @@ spec:
           
           resources:
             requests:
-              cpu: "4"
-              memory: "16Gi"
+              cpu: "1"
+              memory: "4Gi"
             limits:
-              cpu: "8"
-              memory: "32Gi"
+              # set CPU limit equal to request so Ray scheduling aligns with Kubernetes enforcement
+              cpu: "1"
+              memory: "8Gi"
           
           volumeMounts:
           - name: log-volume
