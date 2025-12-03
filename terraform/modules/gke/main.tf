@@ -65,6 +65,8 @@ resource "google_container_cluster" "primary" {
     }
   }
 
+  deletion_protection = false
+
   resource_labels = {
     environment = var.environment
     managed_by  = "terraform"

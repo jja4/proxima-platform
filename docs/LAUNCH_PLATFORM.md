@@ -169,7 +169,7 @@ sed -i '' "s/SET_YOUR_BUCKET_NAME/${PROJECT_ID}-terraform-state/g" main.tf
 #  }
 terraform init \
   -backend-config="bucket=${PROJECT_ID}-terraform-state" \
-  -backend-config="prefix=dev" \
+  -backend-config="prefix=dev"
 
 # Preview changes
 terraform plan
@@ -379,22 +379,69 @@ module "gke" {
 
 ## Cleanup
 
+### Pre-Destroy Checklist
+
+**Before running `terraform destroy`, complete these steps to ensure a clean teardown:**
+
+1. **Authenticate with your personal Google account** (not terraform service account):
+   ```bash
+   gcloud auth login
+   gcloud config set project ${PROJECT_ID}
+   ```
+
+2. **Scale down Ray cluster** (prevents hanging pods):
+   ```bash
+   ml-platform scale 0
+   ```
+
+3. **Delete all jobs** (prevents orphaned resources):
+   ```bash
+   kubectl delete jobs -n jobs --all
+   ```
+
+4. **Verify no forwarding rules exist** (can block VPC deletion):
+   ```bash
+   gcloud compute forwarding-rules list --project=${PROJECT_ID}
+   ```
+
+5. **Verify deletion protection is disabled** (GKE cluster):
+   ```bash
+   # Should show deletion_protection = false in terraform code
+   grep "deletion_protection" terraform/modules/gke/main.tf
+   ```
+
 ### Destroy All Infrastructure
 
 ```bash
 cd terraform/envs/dev
 
 # Preview destruction
-terraform plan -destroy
+terraform plan -destroy -var="project_id=${PROJECT_ID}"
 
-# Destroy (type 'yes' when prompted)
-terraform destroy
+# Destroy with auto-approve
+terraform destroy -var="project_id=${PROJECT_ID}" -auto-approve
+```
+
+**If destroy fails with network/forwarding rule errors:**
+
+```bash
+# Remove VPC from state (Terraform can't delete it due to phantom references)
+terraform state rm module.vpc.google_compute_network.vpc
+terraform state rm module.vpc.google_compute_router.router
+terraform state rm module.vpc.google_compute_router_nat.nat
+
+# Retry destroy
+terraform destroy -var="project_id=${PROJECT_ID}" -auto-approve
+
+# Manually delete VPC after Terraform completes
+gcloud compute networks delete ml-platform-vpc --project=${PROJECT_ID}
 ```
 
 ⚠️ **Warning**: This deletes ALL resources including:
 - GKE cluster and all workloads
 - Storage bucket and contents (ml-artifacts)
 - Artifact Registry and images
+- Service accounts and IAM bindings
 
 ### Delete State Bucket (Manual Step!)
 
