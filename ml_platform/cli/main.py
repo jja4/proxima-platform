@@ -25,7 +25,7 @@ def print_usage():
 Constellaration ML Platform CLI
 
 Usage:
-    platform <command> [options]
+    ml-platform <command> [options]
 
 Commands:
     status                           Show platform status
@@ -37,12 +37,12 @@ Commands:
     port-forward [ray|grafana|all]   Access dashboards
 
 Examples:
-    platform status
-    platform build stellar_optimization v1.0.0
-    platform submit stellar_optimization:v1.0.0
-    platform logs stellar-optimization-20251201-120000
-    platform scale 10
-    platform port-forward ray
+    ml-platform status
+    ml-platform build stellar_optimization v1.0.0
+    ml-platform submit stellar_optimization:v1.0.0
+    ml-platform logs stellar-optimization-20251201-120000
+    ml-platform scale 10
+    ml-platform port-forward ray
     """)
 
 

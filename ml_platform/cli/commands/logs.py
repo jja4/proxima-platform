@@ -7,7 +7,7 @@ import sys
 def run(args):
     """View job logs"""
     if len(args) < 1:
-        print("Usage: platform logs <job-name>")
+        print("Usage: ml-platform logs <job-name>")
         sys.exit(1)
     
     job_name = args[0]

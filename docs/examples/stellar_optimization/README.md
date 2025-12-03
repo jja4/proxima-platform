@@ -15,13 +15,13 @@ Optimizes stellarator magnetic configurations in parallel using:
 
 ```bash
 # Build container
-python -m platform.cli build stellar_optimization v1.0.0
+python -m ml_platform.cli build stellar_optimization v1.0.0
 
 # Submit training job
-python -m platform.cli submit stellar_optimization:v1.0.0
+python -m ml_platform.cli submit stellar_optimization:v1.0.0
 
 # Monitor progress
-python -m platform.cli logs stellar-optimization-TIMESTAMP
+python -m ml_platform.cli logs stellar-optimization-TIMESTAMP
 ```
 
 ## Files in This Example
@@ -116,7 +116,7 @@ resources:
 ### View Ray Dashboard
 
 ```bash
-python -m platform.cli port-forward ray
+python -m ml_platform.cli port-forward ray
 # Open http://localhost:8265
 ```
 
@@ -130,7 +130,7 @@ You'll see:
 
 ```bash
 # List all jobs
-python -m platform.cli list
+python -m ml_platform.cli list
 
 # Get detailed status
 kubectl describe job stellar-optimization-TIMESTAMP -n jobs
@@ -143,7 +143,7 @@ kubectl get events -n jobs
 
 ```bash
 # Follow logs in real-time
-python -m platform.cli logs stellar-optimization-TIMESTAMP
+python -m ml_platform.cli logs stellar-optimization-TIMESTAMP
 
 # Or with kubectl
 kubectl logs -n jobs job/stellar-optimization-TIMESTAMP -f
@@ -199,10 +199,10 @@ results = ray.get([train_with_params.remote(c) for c in configs])
 
 ```bash
 # Scale up for more parallelism
-python -m platform.cli scale 20
+python -m ml_platform.cli scale 20
 
 # Scale down to save costs
-python -m platform.cli scale 2
+python -m ml_platform.cli scale 2
 ```
 
 ### Auto-scaling
@@ -279,8 +279,8 @@ vim examples/my_workload/train.py
 vim examples/my_workload/Dockerfile
 
 # Build and run
-python -m platform.cli build my_workload v1.0.0
-python -m platform.cli submit my_workload:v1.0.0
+python -m ml_platform.cli build my_workload v1.0.0
+python -m ml_platform.cli submit my_workload:v1.0.0
 ```
 
 ## Performance Tips

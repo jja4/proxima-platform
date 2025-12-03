@@ -1,5 +1,5 @@
 # Optional: Kubernetes job manifest
-# (You can also use: platform submit stellar_optimization:v1.0.0)
+# (You can also use: ml-platform submit stellar_optimization:v1.0.0)
 
 apiVersion: batch/v1
 kind: Job

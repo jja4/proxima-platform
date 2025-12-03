@@ -14,8 +14,8 @@ def run_cmd(cmd: str) -> tuple:
 def run(args):
     """Build and push workload container"""
     if len(args) < 2:
-        print("Usage: platform build <workload> <version>")
-        print("Example: platform build stellar_optimization v1.0.0")
+        print("Usage: ml-platform build <workload> <version>")
+        print("Example: ml-platform build stellar_optimization v1.0.0")
         print("\nAvailable workloads:")
         subprocess.run("ls -1 docs/examples/ 2>/dev/null || echo '  (none found)'", shell=True)
         sys.exit(1)
@@ -74,4 +74,4 @@ def run(args):
     
     print(f"\n✅ Build complete!\n")
     print("Next steps:")
-    print(f"  platform submit {workload}:{version}")
+    print(f"  ml-platform submit {workload}:{version}")

@@ -22,7 +22,7 @@ terraform test -verbose
 
 ```
 tests/
-├── platform_test.tftest.hcl    # Main platform tests
+├── ml-platform_test.tftest.hcl    # Main ml-platform tests
 │   ├── VPC Tests               # Network configuration
 │   ├── GKE Tests               # Cluster configuration
 │   └── Integration Tests       # Full environment validation

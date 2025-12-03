@@ -1,4 +1,4 @@
-"""Status command - show platform health"""
+"""Status command - show ml-platform health"""
 
 import subprocess
 
@@ -10,8 +10,8 @@ def run_cmd(cmd: str) -> tuple:
 
 
 def run(args):
-    """Show platform status"""
-    print("🔍 Platform Status\n")
+    """Show ml-platform status"""
+    print("🔍 ml-platform Status\n")
     
     print("Cluster:")
     out, _ = run_cmd("kubectl get nodes --no-headers 2>/dev/null | wc -l")

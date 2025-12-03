@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: platform-config
+  name: ml-platform-config
   namespace: jobs
 data:
   ray_address: "ray://ray-cluster-head-svc.ray-system.svc.cluster.local:10001"

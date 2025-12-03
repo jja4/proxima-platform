@@ -23,7 +23,7 @@ python docs/examples/stellar_optimization/train.py
 # PRODUCTION: Deploy to GKE and submit jobs
 gcloud auth login
 cd terraform/envs/dev && terraform apply
-platform submit stellar_optimization:v1.0.0
+ml-platform submit stellar_optimization:v1.0.0
 ```
 
 See **[docs/QUICKSTART.md](docs/QUICKSTART.md)** for complete setup guide.
@@ -64,9 +64,9 @@ proxima-platform/
 ├── .devcontainer/          # 🐳 VS Code dev container config
 │   ├── devcontainer.json   # Container settings, tools, extensions
 │   └── Dockerfile          # Container image
-├── platform/
+├── ml-platform/
 │   ├── bin/
-│   │   └── platform        # 🎯 Executable CLI script
+│   │   └── ml-platform        # 🎯 Executable CLI script
 │   ├── cli/                # CLI implementation
 │   │   ├── main.py         # Command dispatcher
 │   │   └── commands/       # Each command in its own module
@@ -105,9 +105,9 @@ proxima-platform/
 
 ### ✅ Clean Executable
 ```bash
-platform status              # Clean! ✨
+ml-platform status              # Clean! ✨
 # vs
-python -m platform.cli status  # Verbose 😕
+python -m ml_platform.cli status  # Verbose 😕
 ```
 
 ### ✅ Fast Package Management (UV)
@@ -124,15 +124,15 @@ uv add package-name          # Add dependency to pyproject.toml
 curl -LsSf https://astral.sh/uv/install.sh | sh
 # Or: brew install uv
 
-# Install platform (creates .venv, installs CLI)
+# Install ml-platform (creates .venv, installs CLI)
 uv sync
 
 # Activate virtual environment
 source .venv/bin/activate  # macOS/Linux
 .venv\Scripts\activate     # Windows
 
-# Now 'platform' command is available
-platform status
+# Now 'ml-platform' command is available
+ml-platform status
 
 # With dev tools (pytest, black, ruff)
 uv sync --extra dev
@@ -144,13 +144,13 @@ uv sync --extra examples
 ### Option 2: Legacy pip-compatible
 ```bash
 pip install -e .
-platform status
+ml-platform status
 ```
 
 ### Option 3: Add bin/ to PATH (no venv)
 ```bash
 export PATH="$PWD/platform/bin:$PATH"
-platform status
+ml-platform status
 ```
 
 ### Option 4: Dev Container (VS Code)
@@ -162,7 +162,7 @@ code .
 # Container auto-runs: uv sync --extra dev
 # Virtual env is auto-activated!
 
-platform status  # ✅ Just works!
+ml-platform status  # ✅ Just works!
 ```
 
 ## 🎮 CLI Commands (GKE Production)
@@ -170,40 +170,40 @@ platform status  # ✅ Just works!
 > **Note:** These commands require a deployed GKE cluster. For local development, run Python scripts directly.
 
 ```bash
-platform status                           # Show platform health
-platform build <workload> <version>       # Build and push container
-platform submit <workload>:<version>      # Submit training job
-platform logs <job-name>                  # View job logs
-platform list                             # List all jobs
-platform scale <replicas>                 # Scale Ray workers
-platform port-forward [ray|grafana|all]   # Access dashboards
+ml-platform status                           # Show ml-platform health
+ml-platform build <workload> <version>       # Build and push container
+ml-platform submit <workload>:<version>      # Submit training job
+ml-platform logs <job-name>                  # View job logs
+ml-platform list                             # List all jobs
+ml-platform scale <replicas>                 # Scale Ray workers
+ml-platform port-forward [ray|grafana|all]   # Access dashboards
 ```
 
 ### Examples
 
 ```bash
 # Build workload
-platform build stellar_optimization v1.0.0
+ml-platform build stellar_optimization v1.0.0
 
 # Submit job
-platform submit stellar_optimization:v1.0.0
+ml-platform submit stellar_optimization:v1.0.0
 
 # Monitor
-platform logs stellar-optimization-20251201-120000
+ml-platform logs stellar-optimization-20251201-120000
 
 # Scale Ray cluster
-platform scale 20
+ml-platform scale 20
 
 # Access dashboards
-platform port-forward ray      # Ray: http://localhost:8265
-platform port-forward grafana  # Grafana: http://localhost:3000
-platform port-forward all      # All dashboards
+ml-platform port-forward ray      # Ray: http://localhost:8265
+ml-platform port-forward grafana  # Grafana: http://localhost:3000
+ml-platform port-forward all      # All dashboards
 ```
 
 ## 🐍 SDK Usage
 
 ```python
-from platform.sdk import PlatformClient
+from ml_platform.sdk import PlatformClient
 
 # Create client
 client = PlatformClient(project_id="your-project")
@@ -281,7 +281,7 @@ code .
 #    Container automatically runs: uv sync --extra dev
 
 # 3. Terminal opens with activated venv
-platform status    # ✅ Works!
+ml-platform status    # ✅ Works!
 kubectl get nodes  # ✅ Works!
 uv add requests    # ✅ Works!
 ```
@@ -299,13 +299,16 @@ gcloud container clusters get-credentials ml-platform-gke \
   --region europe-west3 --project YOUR_PROJECT
 
 # 3. Verify
-platform status
+ml-platform status
 ```
 
 ## 📚 Documentation
 
-- **[Quick Start](docs/QUICKSTART.md)** - Local dev & GCP deployment
-- **[GitHub Actions Setup](docs/GITHUB_ACTIONS_SETUP.md)** - CI/CD configuration
+- **[Quick Start](docs/QUICKSTART.md)** - 5-minute overview
+- **[Developer Guide](docs/DEV_GUIDE.md)** - Local development & testing
+- **[Launch Platform](docs/LAUNCH_PLATFORM.md)** - Terraform deployment & GCP setup
+- **[Manage Platform](docs/USE_PLATFORM.md)** - Operations, monitoring, scaling
+- **[GitHub Actions Setup](docs/GITHUB_ACTIONS.md)** - CI/CD configuration
 - **[Example: Stellar Optimization](docs/examples/stellar_optimization/README.md)** - Full example workload
 
 ## 🎓 Creating Your Own Workload
@@ -319,30 +322,30 @@ vim docs/examples/my_workload/train.py
 vim docs/examples/my_workload/Dockerfile
 
 # 3. Build & submit
-platform build my_workload v1.0.0
-platform submit my_workload:v1.0.0
+ml-platform build my_workload v1.0.0
+ml-platform submit my_workload:v1.0.0
 
 # 4. Monitor
-platform logs my-workload-TIMESTAMP
+ml-platform logs my-workload-TIMESTAMP
 ```
 
 ## 📊 Monitoring
 
 ```bash
 # Access dashboards
-platform port-forward ray       # localhost:8265
-platform port-forward grafana   # localhost:3000
-platform port-forward all       # All dashboards
+ml-platform port-forward ray       # localhost:8265
+ml-platform port-forward grafana   # localhost:3000
+ml-platform port-forward all       # All dashboards
 
 # Job monitoring
-platform list
-platform logs job-name
-platform status
+ml-platform list
+ml-platform logs job-name
+ml-platform status
 ```
 
 ## 🆘 Troubleshooting
 
-### Platform command not found
+### ml-platform command not found
 ```bash
 # Activate virtual environment
 source .venv/bin/activate

@@ -23,17 +23,17 @@ Before using this guide, ensure:
 
 ## Platform CLI Reference
 
-The `platform` CLI simplifies common operations:
+The `ml-platform` CLI simplifies common operations:
 
 | Command | Description |
 |---------|-------------|
-| `platform status` | Show cluster health and job summary |
-| `platform build <workload> <version>` | Build and push container to Artifact Registry |
-| `platform submit <workload>:<version>` | Submit training job to GKE |
-| `platform logs <job-name>` | View job logs (streaming) |
-| `platform list` | List all jobs |
-| `platform scale <replicas>` | Scale Ray workers |
-| `platform port-forward [service]` | Access dashboards locally |
+| `ml-platform status` | Show cluster health and job summary |
+| `ml-platform build <workload> <version>` | Build and push container to Artifact Registry |
+| `ml-platform submit <workload>:<version>` | Submit training job to GKE |
+| `ml-platform logs <job-name>` | View job logs (streaming) |
+| `ml-platform list` | List all jobs |
+| `ml-platform scale <replicas>` | Scale Ray workers |
+| `ml-platform port-forward [service]` | Access dashboards locally |
 
 ---
 
@@ -43,7 +43,7 @@ The `platform` CLI simplifies common operations:
 
 ```bash
 # Build from docs/examples/stellar_optimization
-platform build stellar_optimization v1.0.0
+ml-platform build stellar_optimization v1.0.0
 ```
 
 This command:
@@ -63,7 +63,7 @@ cp docs/examples/stellar_optimization/* docs/examples/my_workload/
 vim docs/examples/my_workload/train.py
 
 # Build and push
-platform build my_workload v1.0.0
+ml-platform build my_workload v1.0.0
 ```
 
 ### Manual Docker Build
@@ -91,7 +91,7 @@ docker push europe-west3-docker.pkg.dev/${PROJECT_ID}/ml-platform/my_workload:v1
 ### Submit Training Job
 
 ```bash
-platform submit stellar_optimization:v1.0.0
+ml-platform submit stellar_optimization:v1.0.0
 ```
 
 Output:
@@ -112,10 +112,10 @@ Jobs auto-delete after completion. Adjust the TTL (time-to-live):
 
 ```bash
 # Keep completed job for 1 hour
-platform submit stellar_optimization:v1.0.0 --ttl=3600
+ml-platform submit stellar_optimization:v1.0.0 --ttl=3600
 
 # Keep completed job for 7 days
-platform submit stellar_optimization:v1.0.0 --ttl=604800
+ml-platform submit stellar_optimization:v1.0.0 --ttl=604800
 ```
 
 ### Submit with kubectl (Advanced)
@@ -167,7 +167,7 @@ kubectl apply -f my-job.yaml
 
 ```bash
 # Stream logs from running job
-platform logs stellar_optimization-20251202-143022
+ml-platform logs stellar_optimization-20251202-143022
 
 # With kubectl (more options)
 kubectl logs -n jobs job/stellar_optimization-20251202-143022 -f
@@ -182,7 +182,7 @@ kubectl logs -n jobs POD_NAME --previous
 ### List All Jobs
 
 ```bash
-platform list
+ml-platform list
 ```
 
 Output:
@@ -198,7 +198,7 @@ my_workload-20251202-140000             0/1           15m        15m
 
 ```bash
 # Quick status
-platform status
+ml-platform status
 
 # Detailed job info
 kubectl describe job -n jobs stellar_optimization-20251202-143022
@@ -220,7 +220,7 @@ kubectl get events -n jobs --sort-by='.lastTimestamp'
 ### Port-Forward All Dashboards
 
 ```bash
-platform port-forward all
+ml-platform port-forward all
 ```
 
 Opens:
@@ -234,13 +234,13 @@ Press `Ctrl+C` to stop.
 
 ```bash
 # Ray Dashboard
-platform port-forward ray
+ml-platform port-forward ray
 
 # Grafana
-platform port-forward grafana
+ml-platform port-forward grafana
 
 # Prometheus
-platform port-forward prometheus
+ml-platform port-forward prometheus
 ```
 
 ### Ray Dashboard Features
@@ -268,13 +268,13 @@ Pre-configured dashboards include:
 
 ```bash
 # Scale up for more parallelism
-platform scale 10
+ml-platform scale 10
 
 # Scale down to save costs
-platform scale 2
+ml-platform scale 2
 
 # Scale to zero (stops all workers)
-platform scale 0
+ml-platform scale 0
 ```
 
 ### Check Current Scale
@@ -503,23 +503,23 @@ kubectl rollout restart deployment -n monitoring prometheus-grafana
 
 ```bash
 # === Status ===
-platform status                    # Overall health
-kubectl get nodes                  # Node status
-kubectl get pods -A                # All pods
+ml-platform status                    # Overall health
+kubectl get nodes                     # Node status
+kubectl get pods -A                   # All pods
 
 # === Jobs ===
-platform build workload v1         # Build container
-platform submit workload:v1        # Submit job
-platform list                      # List jobs
-platform logs JOB_NAME             # View logs
+ml-platform build workload v1         # Build container
+ml-platform submit workload:v1        # Submit job
+ml-platform list                      # List jobs
+ml-platform logs JOB_NAME             # View logs
 
 # === Scaling ===
-platform scale N                   # Scale Ray workers
+ml-platform scale N                   # Scale Ray workers
 
 # === Dashboards ===
-platform port-forward all          # All dashboards
-platform port-forward ray          # Ray: localhost:8265
-platform port-forward grafana      # Grafana: localhost:3000
+ml-platform port-forward all          # All dashboards
+ml-platform port-forward ray          # Ray: localhost:8265
+ml-platform port-forward grafana      # Grafana: localhost:3000
 
 # === Cleanup ===
 kubectl delete job -n jobs NAME    # Delete job

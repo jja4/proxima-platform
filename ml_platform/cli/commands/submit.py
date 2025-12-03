@@ -18,9 +18,9 @@ def run_cmd(cmd: str) -> tuple:
 def run(args):
     """Submit a training job"""
     if len(args) < 1:
-        print("Usage: platform submit <workload>:<version> [--ttl=SECONDS]")
-        print("Example: platform submit stellar_optimization:v1.0.0")
-        print("         platform submit stellar_optimization:v1.0.0 --ttl=3600")
+        print("Usage: ml-platform submit <workload>:<version> [--ttl=SECONDS]")
+        print("Example: ml-platform submit stellar_optimization:v1.0.0")
+        print("         ml-platform submit stellar_optimization:v1.0.0 --ttl=3600")
         sys.exit(1)
     
     workload_version = args[0]
@@ -97,7 +97,7 @@ spec:
     if result.returncode == 0:
         print(f"✅ Job submitted: {job_name}\n")
         print("Monitor with:")
-        print(f"  platform logs {job_name}")
+        print(f"  ml-platform logs {job_name}")
     else:
         print(f"❌ Error: {result.stderr}")
         sys.exit(1)
