@@ -286,7 +286,6 @@ resource "google_service_account_iam_member" "workload_identity_binding" {
 # =============================================================================
 
 # Deploy RayCluster using the official KubeRay Helm chart
-# This avoids YAML and the kubernetes_manifest provider issues
 resource "helm_release" "ray_cluster" {
   name       = "ray-cluster"
   repository = "https://ray-project.github.io/kuberay-helm/"
