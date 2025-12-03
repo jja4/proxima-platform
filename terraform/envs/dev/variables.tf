@@ -15,6 +15,12 @@ variable "region" {
   default     = "europe-west3"
 }
 
+variable "cluster_location" {
+  description = "Optional zone for the GKE cluster/node pools"
+  type        = string
+  default     = ""
+}
+
 variable "enable_gpu_pool" {
   description = "Enable GPU node pool"
   type        = bool

@@ -83,6 +83,7 @@ module "gke" {
   project_id            = var.project_id
   project_name          = var.project_name
   region                = var.region
+  cluster_location      = var.cluster_location
   environment           = "dev"
   network_name          = module.vpc.network_name
   subnet_name           = module.vpc.subnet_name

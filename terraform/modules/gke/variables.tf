@@ -13,6 +13,12 @@ variable "region" {
   type        = string
 }
 
+variable "cluster_location" {
+  description = "Override for cluster and node pool location (defaults to region)"
+  type        = string
+  default     = ""
+}
+
 variable "environment" {
   description = "Environment name"
   type        = string

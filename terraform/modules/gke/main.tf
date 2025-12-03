@@ -1,7 +1,8 @@
 # GKE Cluster Module
 resource "google_container_cluster" "primary" {
   name     = "${var.project_name}-gke"
-  location = var.region
+  # For location, use cluster_location if specified, otherwise region
+  location = var.cluster_location != "" ? var.cluster_location : var.region  
   project  = var.project_id
 
   network    = var.network_name
@@ -75,7 +76,8 @@ resource "google_container_cluster" "primary" {
 
 resource "google_container_node_pool" "cpu_pool" {
   name     = "cpu-pool"
-  location = var.region
+  # For location, use cluster_location if specified, otherwise region
+  location = var.cluster_location != "" ? var.cluster_location : var.region
   cluster  = google_container_cluster.primary.name
   project  = var.project_id
 
@@ -120,7 +122,8 @@ resource "google_container_node_pool" "gpu_pool" {
   count = var.enable_gpu_pool ? 1 : 0
 
   name     = "gpu-pool"
-  location = var.region
+  # For location, use cluster_location if specified, otherwise region
+  location = var.cluster_location != "" ? var.cluster_location : var.region
   cluster  = google_container_cluster.primary.name
   project  = var.project_id
 
