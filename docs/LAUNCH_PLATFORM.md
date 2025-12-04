@@ -83,7 +83,7 @@ gcloud config set project $PROJECT_ID
 ```
 
 #### Option B: Service Account (For CI/CD or Headless)
-The `setup-terraform-sa.sh` script automatically:
+The `terraform/setup-terraform-service-account.sh` script automatically:
 - Enables required GCP APIs
 - Creates a service account (`terraform-sa`)
 - Grants all necessary IAM roles (including `iam.serviceAccountUser` for GKE)
@@ -92,7 +92,7 @@ The `setup-terraform-sa.sh` script automatically:
 ```bash
 # Create service account and grant all required roles (one-time setup)
 # This script enables APIs, creates the service account, and grants necessary IAM roles
-./setup-terraform-sa.sh
+./terraform/setup-terraform-service-account.sh
 
 # Use the service account
 export GOOGLE_APPLICATION_CREDENTIALS="/path/to/terraform-key.json"
