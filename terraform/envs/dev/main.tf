@@ -63,7 +63,7 @@ resource "google_project_iam_member" "gke_roles" {
 }
 
 resource "google_service_account_iam_member" "gke_nodes_impersonators" {
-  for_each           = toset(var.terraform_runner_members)
+  for_each           = toset(var.terraform_user_list)
   service_account_id = google_service_account.gke_nodes.name
   role               = "roles/iam.serviceAccountUser"
   member             = each.value

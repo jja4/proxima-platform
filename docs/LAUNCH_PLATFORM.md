@@ -134,7 +134,7 @@ region                 = "europe-west3"          # GCP region
 cluster_location       = "europe-west3-a"        # Optional zonal override for GKE
 enable_gpu_pool        = false                   # Set true for GPU support
 grafana_admin_password = "your-secure-password"  # Change this!
-terraform_runner_members = [                     # Principals running/updating terraform
+terraform_user_list = [                     # Principals running/updating terraform
    "user:you@example.com"
 ]
 ```
@@ -149,9 +149,9 @@ terraform_runner_members = [                     # Principals running/updating t
 | `cluster_location` | `""` (falls back to region) | Optional zone for the cluster/node pools |
 | `enable_gpu_pool` | `false` | Enable GPU node pool (adds cost) |
 | `grafana_admin_password` | `changeme-in-production` | Grafana admin password |
-| `terraform_runner_members` | `[]` | Principals granted `iam.serviceAccountUser` on the node SA |
+| `terraform_user_list` | `[]` | Principals granted `iam.serviceAccountUser` on the node SA |
 
-Terraform grants the `roles/iam.serviceAccountUser` binding on the node service account to every entry in `terraform_runner_members`, so whoever runs `terraform apply` can attach that service account to the node VMs without extra manual steps. Specify members with the standard prefixes (`user:`, `serviceAccount:`, `group:`).
+Terraform grants the `roles/iam.serviceAccountUser` binding on the node service account to every entry in `terraform_user_list`, so whoever runs `terraform apply` can attach that service account to the node VMs without extra manual steps. Specify members with the standard prefixes (`user:`, `serviceAccount:`, `group:`).
 
 ---
 

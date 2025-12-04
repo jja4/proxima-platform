@@ -21,7 +21,7 @@ variable "cluster_location" {
   default     = ""
 }
 
-variable "terraform_runner_members" {
+variable "terraform_user_list" {
   description = "Principals (user:, serviceAccount:, group:) that run Terraform and need to impersonate the GKE node SA"
   type        = list(string)
   default     = []
