@@ -4,3 +4,6 @@ region                 = "europe-west3"
 cluster_location       = "europe-west3-a"
 enable_gpu_pool        = false
 grafana_admin_password = "changeme-in-production"
+terraform_runner_members = [
+	"user:your.name@example.com"
+]
