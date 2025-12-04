@@ -128,15 +128,13 @@ cp terraform.tfvars.example terraform.tfvars
 
 Edit `terraform.tfvars`:
 ```hcl
-project_id             = "your-gcp-project-id"   # Required
-project_name           = "ml-platform"           # Prefix for resources
-region                 = "europe-west3"          # GCP region
-cluster_location       = "europe-west3-a"        # Optional zonal override for GKE
-enable_gpu_pool        = false                   # Set true for GPU support
-grafana_admin_password = "your-secure-password"  # Change this!
-terraform_user_list = [                     # Principals running/updating terraform
-   "user:you@example.com"
-]
+project_id             = "your-gcp-project-id"     # Required
+project_name           = "ml-platform"             # Prefix for resources
+region                 = "europe-west3"            # GCP region
+cluster_location       = "europe-west3-a"          # Optional zonal override for GKE
+enable_gpu_pool        = false                     # Set true for GPU support
+grafana_admin_password = "your-secure-password"    # Change this!
+terraform_user_list    = ["user:you@example.com"]  # Principals running/updating terraform
 ```
 
 ### Configuration Options
