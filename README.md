@@ -1,4 +1,4 @@
-# Constellaration ML Training Platform
+# Proxima Fusion ML Training Platform
 
 Production-grade platform for distributed ML training on GCP with Kubernetes and Ray.
 
@@ -20,9 +20,9 @@ The dev container is your complete development environment with all tools pre-in
 # LOCAL: Test training code (no GCP needed)
 python docs/examples/stellar_optimization/train.py
 
-# PRODUCTION: Deploy to GKE and submit jobs
+# PRODUCTION: Deploy to GKE and submit jobs (cluster must exist first)
 gcloud auth login
-cd terraform/envs/dev && terraform apply
+cd terraform/envs/dev && terraform apply    # build the GKE infra before submitting
 ml-platform submit stellar_optimization:v1.0.0
 ```
 
@@ -88,8 +88,7 @@ proxima-platform/
 │   │       ├── train.py    # Training code
 │   │       ├── Dockerfile  # Container definition
 │   │       └── job.yaml    # Kubernetes manifest
-│   ├── QUICKSTART.md       # Getting started guide
-│   └── GITHUB_ACTIONS.md   # CI/CD setup
+│   └── QUICKSTART.md       # Getting started guide
 ├── terraform/              # Infrastructure as Code
 ├── kubernetes/             # Kubernetes manifests
 ├── pyproject.toml          # Project config (dependencies, build)
@@ -100,8 +99,7 @@ proxima-platform/
 
 ### ✅ Modern Python Packaging
 - `pyproject.toml` - All config in one place
-- `uv sync` - Fast, reproducible installs with lock file
-- `uv add` - Easy dependency management
+- `uv sync` - Fast, reproducible installs from the lockfile
 
 ### ✅ Clean Executable
 ```bash
@@ -110,15 +108,9 @@ ml-platform status              # Clean! ✨
 python -m ml_platform.cli status  # Verbose 😕
 ```
 
-### ✅ Fast Package Management (UV)
-```bash
-uv sync                      # 10-100x faster than pip! ⚡
-uv add package-name          # Add dependency to pyproject.toml
-```
-
 ## 🛠 Installation
 
-### Option 1: Modern UV Workflow (Recommended)
+### Option 1: UV (Recommended)
 ```bash
 # Install uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -133,12 +125,6 @@ source .venv/bin/activate  # macOS/Linux
 
 # Now 'ml-platform' command is available
 ml-platform status
-
-# With dev tools (pytest, black, ruff)
-uv sync --extra dev
-
-# With example dependencies (to run stellar_optimization)
-uv sync --extra examples
 ```
 
 ### Option 2: Legacy pip-compatible
@@ -151,18 +137,6 @@ ml-platform status
 ```bash
 export PATH="$PWD/platform/bin:$PATH"
 ml-platform status
-```
-
-### Option 4: Dev Container (VS Code)
-```bash
-# Open in VS Code
-code .
-
-# Click "Reopen in Container"
-# Container auto-runs: uv sync --extra dev
-# Virtual env is auto-activated!
-
-ml-platform status  # ✅ Just works!
 ```
 
 ## 🎮 CLI Commands (GKE Production)
@@ -225,68 +199,18 @@ print(job.logs())
 # Scale platform
 client.scale_ray(replicas=20)
 ```
+# 🏗 Infrastructure
 
-## 📦 Dependency Management
-
-### Add Dependencies
-```bash
-# Add runtime dependency
-uv add google-cloud-storage
-
-# Add dev dependency
-uv add --dev pytest
-
-# Install/update everything
-uv sync
-```
-
-### Lock Dependencies
-```bash
-# Update lock file
-uv lock --upgrade
-
-# Sync to lock file
-uv sync
-```
-
-### Remove Dependencies
-```bash
-uv remove package-name
-```
-
-## 🐳 Dev Container (VS Code)
-
-### What is a Dev Container?
-
-A Docker container with **everything pre-installed**:
-- Python 3.10 + UV
-- kubectl, helm, terraform, gcloud
-- Docker
-- VS Code extensions
-
-### Why Use It?
-
-✅ **Consistent environment** - Same tools/versions for everyone
-✅ **No local setup** - Everything in container
-✅ **Fast** - Uses UV for quick installs
-✅ **Pre-configured** - Ready to code immediately
-
-### How to Use
-
-```bash
-# 1. Open in VS Code
-code .
-
-# 2. Click "Reopen in Container"
-#    Container automatically runs: uv sync --extra dev
-
-# 3. Terminal opens with activated venv
-ml-platform status    # ✅ Works!
-kubectl get nodes  # ✅ Works!
-uv add requests    # ✅ Works!
-```
+- **GCP**: GKE with autoscaling
+- **Kubernetes**: Ray operator, monitoring
+- **Ray**: Distributed computing
+- **Monitoring**: Prometheus + Grafana
+- **Storage**: Google Cloud Storage
 
 ## 🚢 Deployment
+
+Follow [Launch Platform](docs/LAUNCH_PLATFORM.md) guide to deploy infrastructure.
+Once GCP is authenticated and a Service Account with proper permissions is set up, run:
 
 ```bash
 # 1. Deploy infrastructure
@@ -302,14 +226,6 @@ gcloud container clusters get-credentials ml-platform-gke \
 ml-platform status
 ```
 
-## 📚 Documentation
-
-- **[Quick Start](docs/QUICKSTART.md)** - 5-minute overview
-- **[Developer Guide](docs/DEV_GUIDE.md)** - Local development & testing
-- **[Launch Platform](docs/LAUNCH_PLATFORM.md)** - Terraform deployment & GCP setup
-- **[Manage Platform](docs/USE_PLATFORM.md)** - Operations, monitoring, scaling
-- **[GitHub Actions Setup](docs/GITHUB_ACTIONS.md)** - CI/CD configuration
-- **[Example: Stellar Optimization](docs/examples/stellar_optimization/README.md)** - Full example workload
 
 ## 🎓 Creating Your Own Workload
 
@@ -343,70 +259,11 @@ ml-platform logs job-name
 ml-platform status
 ```
 
-## 🆘 Troubleshooting
 
-### ml-platform command not found
-```bash
-# Activate virtual environment
-source .venv/bin/activate
+## 📚 Documentation
 
-# Or reinstall
-uv sync
-```
-
-### UV not found
-```bash
-# Install UV
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Add to PATH
-export PATH="$HOME/.cargo/bin:$PATH"
-```
-
-### Dependency conflicts
-```bash
-# Update and reinstall
-uv lock --upgrade
-uv sync
-```
-
-## ⚡ Why UV?
-
-**UV is 10-100x faster than pip:**
-
-```bash
-# Speed comparison
-time pip install ray[default]==2.9.0   # 45-60 seconds ⏱️
-time uv add ray[default]==2.9.0        # 5-10 seconds ⚡
-```
-
-**Modern workflow:**
-- `uv add package` - Add to pyproject.toml
-- `uv sync` - Install from lock file (reproducible!)
-- `uv lock --upgrade` - Update dependencies
-- Auto-creates and manages virtual environments
-
-**Benefits:**
-- ✅ Written in Rust (fast!)
-- ✅ Lock files for reproducible builds
-- ✅ Smart caching across projects
-- ✅ Better dependency resolution
-- ✅ Modern UX
-
-See **[docs/UV_GUIDE.md](docs/UV_GUIDE.md)** for complete guide.
-
-## 🏗 Infrastructure
-
-- **GCP**: GKE with autoscaling
-- **Kubernetes**: Ray operator, monitoring
-- **Ray**: Distributed computing
-- **Monitoring**: Prometheus + Grafana
-- **Storage**: Google Cloud Storage
-
-## 📄 License
-
-MIT
-
----
-
-**Modern. Fast. Production-ready.** ⚡
+- **[Quick Start](docs/QUICKSTART.md)** - 5-minute overview
+- **[Developer Guide](docs/DEV_GUIDE.md)** - Local development & testing
+- **[Launch Platform](docs/LAUNCH_PLATFORM.md)** - Terraform deployment & GCP setup
+- **[Use Platform](docs/USE_PLATFORM.md)** - Operations, monitoring, scaling
+- **[Example: Stellar Optimization](docs/examples/stellar_optimization/README.md)** -  Example workload
