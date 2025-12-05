@@ -54,13 +54,13 @@ The dev container automatically starts these services:
 
 ```bash
 # View service logs
-docker-compose -f .devcontainer/docker-compose.yml logs ray-head
+docker compose -f .devcontainer/docker-compose.yml logs ray-head
 
 # Restart all services
-docker-compose -f .devcontainer/docker-compose.yml restart
+docker compose -f .devcontainer/docker-compose.yml restart
 
 # Restart specific service
-docker-compose -f .devcontainer/docker-compose.yml restart ray-head
+docker compose -f .devcontainer/docker-compose.yml restart ray-head
 ```
 
 ---
@@ -296,11 +296,11 @@ mypy ml-platform/
 
 ```bash
 # Check Ray services
-docker-compose -f .devcontainer/docker-compose.yml logs ray-head
-docker-compose -f .devcontainer/docker-compose.yml logs ray-worker
+docker compose -f .devcontainer/docker-compose.yml logs ray-head
+docker compose -f .devcontainer/docker-compose.yml logs ray-worker
 
 # Restart Ray cluster
-docker-compose -f .devcontainer/docker-compose.yml restart ray-head ray-worker
+docker compose -f .devcontainer/docker-compose.yml restart ray-head ray-worker
 ```
 
 ### ml-platform Command Not Found
