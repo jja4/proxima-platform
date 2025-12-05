@@ -2,6 +2,7 @@
   "name": "ML Platform Dev Container",
   "dockerComposeFile": "docker-compose.yml",
   "service": "devcontainer",
+  // Services to start with the devcontainer
   "runServices": [
   "devcontainer",
   "ray-head",
@@ -11,7 +12,9 @@
   "prometheus",
   "grafana"
   ],
+  // Where the workspace lives inside the devcontainer
   "workspaceFolder": "/workspace",
+  // Devcontainer features
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "installZsh": true,
@@ -29,6 +32,7 @@
       "version": "3.10"
     }
   },
+  // VS Code environment inside the container
   "customizations": {
     "vscode": {
       "settings": {
@@ -47,21 +51,18 @@
         "ms-python.vscode-pylance",
         "hashicorp.terraform",
         "ms-kubernetes-tools.vscode-kubernetes-tools",
-        "googlecloudtools.cloudcode",
         "ms-azuretools.vscode-docker",
         "GitHub.copilot",
         "redhat.vscode-yaml"
       ]
     }
   },
-  "containerEnv": {
-    "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}",
-    "PROM_HOST_PORT": "9090",
-    "MINIO_HOST_PORT": "9000",
-    "MINIO_CONSOLE_PORT": "9001",
-    "RAY_DASHBOARD_PORT": "8265"
-  },
+  // After the container is built for the first time
   "postCreateCommand": "uv sync --extra dev",
+
+  // Fix docker-outside-of-docker permissions
   "postStartCommand": "sudo sh -c 'chown root:docker /var/run/docker.sock && chmod g+rw /var/run/docker.sock' 2>/dev/null || true",
+
+  // Use the vscode user configured in the Dockerfile
   "remoteUser": "vscode"
 }
