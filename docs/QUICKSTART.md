@@ -47,6 +47,9 @@ gcloud auth login
 gcloud config set project $PROJECT_ID
 
 # Deploy infrastructure (~15 min)
+# Advised to set up a Service Account with necessary permissions first:
+# follow setup-terraform-service-account.sh in terraform/
+# Them, follow procedures in LAUNCH_PLATFORM.md for detailed instructions
 cd terraform/envs/dev
 terraform init && terraform apply
 
@@ -85,5 +88,4 @@ platform port-forward all          # Access dashboards
 | [DEV_GUIDE.md](DEV_GUIDE.md) | Local development, testing, creating workloads |
 | [LAUNCH_PLATFORM.md](LAUNCH_PLATFORM.md) | Terraform deployment, GCP setup, infrastructure |
 | [USE_PLATFORM.md](USE_PLATFORM.md) | Operations, monitoring, scaling, troubleshooting |
-| [GITHUB_ACTIONS.md](GITHUB_ACTIONS.md) | CI/CD automation |
 | [examples/stellar_optimization/](examples/stellar_optimization/) | Example workload with full documentation |
