@@ -2,6 +2,15 @@
   "name": "ML Platform Dev Container",
   "dockerComposeFile": "docker-compose.yml",
   "service": "devcontainer",
+  "runServices": [
+  "devcontainer",
+  "ray-head",
+  "ray-worker",
+  "minio",
+  "minio-init",
+  "prometheus",
+  "grafana"
+  ],
   "workspaceFolder": "/workspace",
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
@@ -15,9 +24,6 @@
     },
     "ghcr.io/devcontainers/features/terraform:1": {
       "version": "1.5.0"
-    },
-    "ghcr.io/devcontainers/features/google-cloud-cli:1": {
-      "version": "latest"
     },
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.10"
@@ -48,14 +54,14 @@
       ]
     }
   },
-  "forwardPorts": [8265, 3000, 9090, 9000, 9001],
-  "portsAttributes": {
-    "8265": { "label": "Ray Dashboard" },
-    "3000": { "label": "Grafana" },
-    "9090": { "label": "Prometheus" },
-    "9000": { "label": "MinIO API" },
-    "9001": { "label": "MinIO Console" }
+  "containerEnv": {
+    "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}",
+    "PROM_HOST_PORT": "9090",
+    "MINIO_HOST_PORT": "9000",
+    "MINIO_CONSOLE_PORT": "9001",
+    "RAY_DASHBOARD_PORT": "8265"
   },
-  "postCreateCommand": "uv sync --extra dev && echo '✅ Platform ready! Ray cluster, MinIO, and monitoring are running.' && echo '   Ray Dashboard: http://localhost:8265' && echo '   MinIO Console: http://localhost:9001' && echo '   Grafana:       http://localhost:3000'",
+  "postCreateCommand": "uv sync --extra dev",
+  "postStartCommand": "sudo sh -c 'chown root:docker /var/run/docker.sock && chmod g+rw /var/run/docker.sock' 2>/dev/null || true",
   "remoteUser": "vscode"
 }

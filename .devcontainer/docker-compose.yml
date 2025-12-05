@@ -1,8 +1,6 @@
 # Dev Container with Local ML Platform Services
 # Provides: IDE environment + Ray cluster + MinIO + Monitoring
 
-version: '3.8'
-
 services:
   # ==========================================================================
   # Dev Container (VS Code development environment)
@@ -12,9 +10,10 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ..:/workspace:cached
-      - ~/.config/gcloud:/home/vscode/.config/gcloud:ro
-      - ~/.kube:/home/vscode/.kube:ro
+      - ${LOCAL_WORKSPACE_FOLDER:-..}:/workspace:cached
+      # Persist gcloud/kube creds inside the devcontainer via named volumes (no host file sharing required)
+      - gcloud-config:/home/vscode/.config/gcloud
+      - kube-config:/home/vscode/.kube
       - /var/run/docker.sock:/var/run/docker.sock
     command: sleep infinity
     networks:
@@ -28,8 +27,10 @@ services:
   # Ray Cluster (Local)
   # ==========================================================================
   ray-head:
-    image: rayproject/ray-ml:2.9.0-py310
-    container_name: ray-head
+    build:
+      context: .
+      dockerfile: ray.Dockerfile
+    image: proxima-platform-ray:local
     command: >
       ray start --head --port=6379 --dashboard-host=0.0.0.0 --block
     ports:
@@ -40,7 +41,6 @@ services:
       - RAY_DISABLE_DOCKER_CPU_WARNING=1
     volumes:
       - ray-data:/tmp/ray
-      - ../docs/examples:/workspace/examples:ro
     networks:
       - ml-platform
     healthcheck:
@@ -50,7 +50,10 @@ services:
       retries: 5
 
   ray-worker:
-    image: rayproject/ray-ml:2.9.0-py310
+    build:
+      context: .
+      dockerfile: ray.Dockerfile
+    image: proxima-platform-ray:local
     command: >
       ray start --address=ray-head:6379 --block
     environment:
@@ -74,7 +77,6 @@ services:
   # ==========================================================================
   minio:
     image: minio/minio:latest
-    container_name: minio
     command: server /data --console-address ":9001"
     ports:
       - "9000:9000"   # MinIO API
@@ -113,11 +115,10 @@ services:
   # ==========================================================================
   prometheus:
     image: prom/prometheus:v2.47.0
-    container_name: prometheus
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ${LOCAL_WORKSPACE_FOLDER:-..}/.devcontainer/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -131,7 +132,6 @@ services:
   # ==========================================================================
   grafana:
     image: grafana/grafana:10.2.0
-    container_name: grafana
     ports:
       - "3000:3000"
     environment:
@@ -140,7 +140,7 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ${LOCAL_WORKSPACE_FOLDER:-..}/.devcontainer/grafana/provisioning:/etc/grafana/provisioning:ro
     networks:
       - ml-platform
     depends_on:
@@ -151,6 +151,8 @@ volumes:
   minio-data:
   prometheus-data:
   grafana-data:
+  gcloud-config:
+  kube-config:
 
 networks:
   ml-platform:
