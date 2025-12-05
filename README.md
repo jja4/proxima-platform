@@ -11,7 +11,7 @@ The dev container is your complete development environment with all tools pre-in
 ```bash
 # 1. Open repo in VS Code
 # 2. Click "Reopen in Container" when prompted
-# 3. Everything is ready - local Ray cluster, monitoring, CLI tools
+# 3. Everything is ready - local Ray cluster, monitoring, CLI tools (CLI pre-installed)
 ```
 
 **From inside the dev container, you can:**
@@ -38,8 +38,8 @@ See **[docs/QUICKSTART.md](docs/QUICKSTART.md)** for complete setup guide.
 │  │  GKE Cluster                                         │   │
 │  │                                                      │   │
 │  │  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐  │   │
-│  │  │ Ray Head    │  │ Ray Workers │  │ Monitoring   │. │   │
-│  │  │ (Dashboard) │  │ (CPU/GPU)   │  │ (Prom/Graf)  │. │   │
+│  │  │ Ray Head    │  │ Ray Workers │  │ Monitoring   │  │   │
+│  │  │ (Dashboard) │  │ (CPU/GPU)   │  │ (Prom/Graf)  │  │   │
 │  │  └─────────────┘  └─────────────┘  └──────────────┘  │   │
 │  │                                                      │   │
 │  │  ┌─────────────────────────────────────────────────┐ │   │
@@ -84,11 +84,14 @@ proxima-platform/
 ├── docs/
 │   ├── examples/           # 📚 Example workloads with documentation
 │   │   └── stellar_optimization/
-│   │       ├── README.md   # Complete guide
+│   │       ├── README.md   # Guide to setup your own workload
 │   │       ├── train.py    # Training code
 │   │       ├── Dockerfile  # Container definition
 │   │       └── job.yaml    # Kubernetes manifest
-│   └── QUICKSTART.md       # Getting started guide
+│   ├── QUICKSTART.md       # Getting started guide
+│   ├── DEV_GUIDE.md        # Local development & testing
+│   ├── LAUNCH_PLATFORM.md  # Infrastructure deployment guide
+│   └── USE_PLATFORM.md     # Operations & monitoring guide
 ├── terraform/              # Infrastructure as Code
 ├── kubernetes/             # Kubernetes manifests
 ├── pyproject.toml          # Project config (dependencies, build)
@@ -135,7 +138,7 @@ ml-platform status
 
 ### Option 3: Add bin/ to PATH (no venv)
 ```bash
-export PATH="$PWD/platform/bin:$PATH"
+export PATH="$PWD/ml-platform/bin:$PATH"
 ml-platform status
 ```
 
