@@ -1,6 +1,8 @@
-# Proxima Fusion ML Training Platform
+# GCP Proxima Fusion ML Training Platform
 
-Production-grade platform for distributed ML training on GCP with Kubernetes and Ray.
+# ![Proxima Platform](docs/images/proxima-platform-image.png)
+
+Platform for distributed ML training on GCP with Kubernetes and Ray.
 
 ## 🚀 Quick Start
 
@@ -98,18 +100,6 @@ proxima-platform/
 └── uv.lock                 # Lock file (reproducible installs)
 ```
 
-## 🎯 Why This Structure?
-
-### ✅ Modern Python Packaging
-- `pyproject.toml` - All config in one place
-- `uv sync` - Fast, reproducible installs from the lockfile
-
-### ✅ Clean Executable
-```bash
-ml-platform status              # Clean! ✨
-# vs
-python -m ml_platform.cli status  # Verbose 😕
-```
 
 ## 🛠 Installation
 
@@ -142,8 +132,14 @@ export PATH="$PWD/ml-platform/bin:$PATH"
 ml-platform status
 ```
 
-## 🎮 CLI Commands (GKE Production)
+### ✅ Clean CLI
+```bash
+ml-platform status                # Easy! 
+# vs
+python -m ml_platform.cli status  # Verbose 
+```
 
+## 🎮 CLI Commands 
 > **Note:** These commands require a deployed GKE cluster. For local development, run Python scripts directly.
 
 ```bash

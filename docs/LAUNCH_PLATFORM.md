@@ -33,9 +33,9 @@ The platform deploys these GCP resources:
 ```
 
 **Resources created:**
-- VPC network with subnet and secondary IP ranges
 - GKE cluster with autoscaling node pools
 - KubeRay operator and Ray cluster
+- VPC network with subnet and secondary IP ranges
 - Prometheus + Grafana monitoring stack
 - Artifact Registry for container images
 - Cloud Storage bucket for ML artifacts
