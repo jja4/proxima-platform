@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ml-platform-config
-  namespace: jobs
-data:
-  ray_address: "ray://ray-cluster-head-svc.ray-system.svc.cluster.local:10001"
-  gcs_bucket: "gs://PROJECT_ID-ml-artifacts"
-  artifact_registry: "europe-west3-docker.pkg.dev/PROJECT_ID/ml-platform"
