@@ -1,0 +1,45 @@
+# Platform Infrastructure Configuration
+# This file configures the operators (ESO, Crossplane) using the "Seed" Secret
+# created by Terraform in the argocd namespace.
+
+# 1. External Secrets ClusterSecretStore
+apiVersion: external-secrets.io/v1beta1
+kind: ClusterSecretStore
+metadata:
+  name: gcpsm-secret-store
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  provider:
+    gcpsm:
+      projectID:
+        secretRef:
+          name: proxima-platform-repo
+          namespace: argocd
+          key: project-id
+      auth:
+        workloadIdentity:
+          clusterLocation:
+            secretRef:
+              name: proxima-platform-repo
+              namespace: argocd
+              key: zone
+          clusterName: management-cluster
+          serviceAccountRef:
+            name: external-secrets
+            namespace: external-secrets
+---
+# 2. Crossplane GCP ProviderConfig
+apiVersion: gcp.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  projectID:
+    source: Secret
+    secretRef:
+      name: proxima-platform-repo
+      namespace: argocd
+      key: project-id
+  credentials:
+    source: InjectedIdentity
