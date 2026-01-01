@@ -1,0 +1,79 @@
+# ArgoCD Project for R & D Team (Restricted Access)
+# Scientists & Engineers can deploy jobs to workload cluster but cannot modify infrastructure
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: workload-teams
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Data Science Team - Deploy ML jobs and Ray clusters to workload cluster
+  
+  # Source repositories the project can deploy from
+  sourceRepos:
+  - 'proxima-platform'  # References the registered repo by name (read-only)
+  - 'https://ray-project.github.io/kuberay-helm'
+  
+  # Destinations - ONLY the workload cluster, ONLY specific namespaces
+  destinations:
+  - namespace: jobs
+    name: workload-cluster  # Only workload cluster
+  - namespace: experiments
+    name: workload-cluster
+  
+  # Cluster resource blacklist - cannot create cluster-wide resources
+  clusterResourceBlacklist:
+  - group: '*'
+    kind: '*'
+  
+  # Namespace resource whitelist - limited to job-related resources
+  namespaceResourceWhitelist:
+  - group: ''
+    kind: ConfigMap
+  - group: ''
+    kind: Secret
+  - group: ''
+    kind: Service
+  - group: ''
+    kind: ServiceAccount
+  - group: 'apps'
+    kind: Deployment
+  - group: 'batch'
+    kind: Job
+  - group: 'ray.io'
+    kind: RayCluster
+  - group: 'ray.io'
+    kind: RayJob
+  - group: 'ray.io'
+    kind: RayService
+  
+  # Deny list - prevent modification of critical resources
+  namespaceResourceBlacklist:
+  - group: ''
+    kind: ResourceQuota
+  - group: ''
+    kind: LimitRange
+  - group: 'networking.k8s.io'
+    kind: NetworkPolicy
+  
+  # Roles - restricted access
+  roles:
+  - name: developer
+    description: Deploy ML jobs and Ray clusters
+    policies:
+    - p, proj:workload-teams:developer, applications, get, workload-teams/*, allow
+    - p, proj:workload-teams:developer, applications, create, workload-teams/*, allow
+    - p, proj:workload-teams:developer, applications, update, workload-teams/*, allow
+    - p, proj:workload-teams:developer, applications, sync, workload-teams/*, allow
+    - p, proj:workload-teams:developer, logs, get, workload-teams/*, allow
+    groups:
+    - workload-teams-developers  # Google Group or IAM group
+  
+  - name: read-only
+    description: View jobs and logs
+    policies:
+    - p, proj:workload-teams:read-only, applications, get, workload-teams/*, allow
+    - p, proj:workload-teams:read-only, logs, get, workload-teams/*, allow
+    groups:
+    - workload-teams-viewers

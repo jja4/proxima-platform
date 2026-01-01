@@ -1,0 +1,51 @@
+# ArgoCD Project for Platform Team (Full Access)
+# Platform engineers can deploy to any namespace and manage infrastructure
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform-team
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Platform Team - Full access to infrastructure and apps
+  
+  # Source repositories the project can deploy from
+  sourceRepos:
+  - 'proxima-platform'  # References the registered repo by name
+  - 'https://*.github.com/*'  # Allow Helm charts from GitHub
+  - 'https://charts.crossplane.io/stable'
+  - 'https://grafana.github.io/helm-charts'
+  - 'https://prometheus-community.github.io/helm-charts'
+  - 'https://kubernetes.github.io/ingress-nginx'
+  - 'https://ray-project.github.io/kuberay-helm'
+  - 'https://external-secrets.github.io/kubernetes-external-secrets'
+  
+  # Destinations - where apps can be deployed
+  destinations:
+  - namespace: '*'
+    name: management-cluster  # Management cluster (where ArgoCD runs)
+  - namespace: '*'
+    name: workload-cluster  # Workload cluster (for Ray jobs)
+  
+  # Cluster resource whitelist - what K8s resources can be created
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  
+  namespaceResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  
+  # Roles - map to RBAC policies
+  roles:
+  - name: platform-admin
+    description: Full access for platform engineering team
+    policies:
+    - p, proj:platform-team:platform-admin, applications, *, platform/*, allow
+    - p, proj:platform-team:platform-admin, clusters, *, *, allow
+    - p, proj:platform-team:platform-admin, repositories, *, *, allow
+    - p, proj:platform-team:platform-admin, logs, get, *, allow
+    - p, proj:platform-team:platform-admin, exec, create, */*, allow
+    groups:
+    - platform-team  # Google Group or IAM group
