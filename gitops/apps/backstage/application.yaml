@@ -1,0 +1,70 @@
+# Backstage - Developer Portal
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: backstage
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"  # Deploy after infrastructure
+spec:
+  project: platform
+  
+  source:
+    repoURL: https://backstage.github.io/charts
+    chart: backstage
+    targetRevision: 1.12.6
+    
+    helm:
+      values: |
+        backstage:
+          image:
+            registry: gcr.io
+            repository: backstage-release/backstage
+            tag: latest
+          
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+          
+          envVars:
+          - name: POSTGRES_HOST
+            value: postgres.backstage.svc.cluster.local
+          - name: POSTGRES_PORT
+            value: "5432"
+          - name: POSTGRES_USER
+            value: backstage
+        
+        postgresql:
+          enabled: true
+          auth:
+            username: backstage
+            database: backstage
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+        
+        service:
+          type: ClusterIP
+          port: 7007
+        
+        ingress:
+          enabled: false  # We'll add this later with cert-manager
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: backstage
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
