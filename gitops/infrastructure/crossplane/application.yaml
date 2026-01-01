@@ -1,0 +1,47 @@
+# Crossplane - Universal Control Plane for Cloud Resources
+# Enables provisioning GCP resources via Kubernetes CRDs
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: crossplane
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: platform
+  
+  source:
+    repoURL: https://charts.crossplane.io/stable
+    chart: crossplane
+    targetRevision: 1.18.3
+    
+    helm:
+      values: |
+        # Enable GCP provider
+        provider:
+          packages:
+          - crossplane/provider-gcp:v1.10.0
+        
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+        
+        args:
+        - --enable-composition-revisions
+        - --enable-external-secret-stores
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: crossplane-system
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - ServerSideApply=true
