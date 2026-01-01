@@ -17,6 +17,7 @@ variables {
   services_range_name     = "services"
   service_account_email   = "test-sa@test-project-id.iam.gserviceaccount.com"
   grafana_admin_password  = "test-password"
+  git_repo_url            = "https://github.com/test-org/test-repo.git"
   terraform_user_list     = ["user:test@example.com"]
 }
 

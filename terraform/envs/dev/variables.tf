@@ -34,3 +34,9 @@ variable "grafana_admin_password" {
   default     = "changeme-in-production"
   sensitive   = true
 }
+
+variable "git_repo_url" {
+  description = "Git repository URL for GitOps (ArgoCD source)"
+  type        = string
+  default     = "https://github.com/YOUR_ORG/proxima-platform.git"
+}
