@@ -1,0 +1,52 @@
+# Core namespaces for the Management Cluster
+# Managed by GitOps instead of Terraform to avoid drift
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+  labels:
+    managed-by: gitops
+    cluster-type: management-cluster
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"  # Create first
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: crossplane
+  labels:
+    managed-by: gitops
+    cluster-type: management-cluster
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"  # After argocd
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: backstage
+  labels:
+    managed-by: gitops
+    cluster-type: management-cluster
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+  labels:
+    managed-by: gitops
+    cluster-type: management-cluster
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: external-secrets
+  labels:
+    managed-by: gitops
+    cluster-type: management-cluster
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
