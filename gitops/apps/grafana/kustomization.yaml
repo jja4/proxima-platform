@@ -1,0 +1,13 @@
+# Grafana - Observability Dashboard
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: monitoring
+
+resources:
+- external-secret.yaml
+- helm-release.yaml
+
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"  # After infrastructure
