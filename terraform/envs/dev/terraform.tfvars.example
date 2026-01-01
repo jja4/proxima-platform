@@ -1,10 +1,9 @@
-project_id             = "your-gcp-project-id"
-project_name           = "ml-platform"
-region                 = "europe-west3"
-cluster_location       = "europe-west3-a"
-enable_gpu_pool        = false
-grafana_admin_password = "changeme-in-production"
-terraform_user_list = [
+project_id                = "your-gcp-project-id"
+project_name              = "ml-platform"
+region                    = "europe-west3"
+management_cluster_zone   = "europe-west3-a"
+grafana_admin_password    = "changeme-in-production"
+terraform_user_list       = [
 	"serviceAccount:terraform-sa@your-gcp-project-id.iam.gserviceaccount.com",
     "user:your.name@example.com"
 ]

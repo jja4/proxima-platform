@@ -1,13 +1,56 @@
-output "cluster_name" {
-  description = "GKE cluster name"
-  value       = module.gke.cluster_name
+# =============================================================================
+# MANAGEMENT CLUSTER OUTPUTS
+# =============================================================================
+
+output "management_cluster_name" {
+  description = "Management cluster name"
+  value       = module.management_cluster.cluster_name
 }
 
-output "cluster_endpoint" {
-  description = "GKE cluster endpoint"
-  value       = module.gke.cluster_endpoint
+output "management_cluster_endpoint" {
+  description = "Management cluster endpoint"
+  value       = module.management_cluster.cluster_endpoint
   sensitive   = true
 }
+
+output "management_cluster_location" {
+  description = "Management cluster location"
+  value       = module.management_cluster.cluster_location
+}
+
+output "management_connect_command" {
+  description = "Command to connect to the management cluster"
+  value       = "gcloud container clusters get-credentials ${module.management_cluster.cluster_name} --zone ${var.management_cluster_zone} --project ${var.project_id}"
+}
+
+# =============================================================================
+# WORKLOAD CLUSTER OUTPUTS
+# =============================================================================
+
+output "workload_cluster_name" {
+  description = "Workload cluster name"
+  value       = module.workload_cluster.cluster_name
+}
+
+output "workload_cluster_endpoint" {
+  description = "Workload cluster endpoint"
+  value       = module.workload_cluster.cluster_endpoint
+  sensitive   = true
+}
+
+output "workload_cluster_location" {
+  description = "Workload cluster location"
+  value       = module.workload_cluster.cluster_location
+}
+
+output "workload_connect_command" {
+  description = "Command to connect to the workload cluster"
+  value       = "gcloud container clusters get-credentials ${module.workload_cluster.cluster_name} --region ${var.region} --project ${var.project_id}"
+}
+
+# =============================================================================
+# INFRASTRUCTURE OUTPUTS
+# =============================================================================
 
 output "artifact_registry" {
   description = "Artifact Registry repository"
@@ -17,11 +60,6 @@ output "artifact_registry" {
 output "gcs_bucket" {
   description = "GCS bucket for ML artifacts"
   value       = google_storage_bucket.ml_artifacts.name
-}
-
-output "connect_command" {
-  description = "Command to connect to the cluster"
-  value       = "gcloud container clusters get-credentials ${module.gke.cluster_name} --region ${var.region} --project ${var.project_id}"
 }
 
 output "workload_identity_sa" {
@@ -34,12 +72,20 @@ output "grafana_secret_name" {
   value       = google_secret_manager_secret.grafana_password.secret_id
 }
 
-output "ray_dashboard_command" {
-  description = "Command to port-forward Ray dashboard"
-  value       = "kubectl port-forward -n ray-system svc/ray-cluster-head-svc 8265:8265"
-}
+# =============================================================================
+# ACCESS COMMANDS
+# =============================================================================
 
-output "grafana_dashboard_command" {
-  description = "Command to port-forward Grafana dashboard"
-  value       = "kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80"
+output "setup_kubeconfigs" {
+  description = "Commands to setup both cluster contexts"
+  value       = <<-EOT
+    # Connect to management cluster
+    gcloud container clusters get-credentials ${module.management_cluster.cluster_name} --zone ${var.management_cluster_zone} --project ${var.project_id}
+    
+    # Connect to workload cluster
+    gcloud container clusters get-credentials ${module.workload_cluster.cluster_name} --region ${var.region} --project ${var.project_id}
+    
+    # List contexts
+    kubectl config get-contexts
+  EOT
 }

@@ -15,22 +15,17 @@ variable "region" {
   default     = "europe-west3"
 }
 
-variable "cluster_location" {
-  description = "Optional zone for the GKE cluster/node pools"
+variable "management_cluster_zone" {
+  description = "Zone for the management cluster (e.g., europe-west3-a)"
   type        = string
-  default     = ""
+  default     = "europe-west3-a"
 }
+
 
 variable "terraform_user_list" {
   description = "Principals (user:, serviceAccount:, group:) that run Terraform and need to impersonate the GKE node SA"
   type        = list(string)
   default     = []
-}
-
-variable "enable_gpu_pool" {
-  description = "Enable GPU node pool"
-  type        = bool
-  default     = false
 }
 
 variable "grafana_admin_password" {
