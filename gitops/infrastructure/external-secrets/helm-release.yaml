@@ -1,0 +1,53 @@
+# Helm Release for External Secrets Operator
+# Deployed via ArgoCD using ApplicationSet auto-discovery
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-secrets-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: platform
+  
+  source:
+    repoURL: https://charts.external-secrets.io
+    chart: external-secrets
+    targetRevision: 0.9.11  # Pin version for reproducibility
+    helm:
+      releaseName: external-secrets
+      values: |
+        installCRDs: true
+        
+        webhook:
+          port: 9443
+        
+        # Enable GCP Secret Manager provider via Workload Identity
+        # ServiceAccount annotation is set by Terraform during ESO installation
+        serviceAccount:
+          create: true
+          name: external-secrets
+        
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: external-secrets
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        maxDuration: 3m
