@@ -8,7 +8,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
-  project: platform
+  project: platform-team
   
   source:
     repoURL: https://charts.crossplane.io/stable

@@ -7,7 +7,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "3"
 spec:
-  project: platform
+  project: platform-team
   
   source:
     repoURL: https://grafana.github.io/helm-charts

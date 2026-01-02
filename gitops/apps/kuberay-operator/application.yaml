@@ -7,7 +7,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"  # Install before Ray clusters
 spec:
-  project: platform
+  project: platform-team
   
   source:
     repoURL: https://ray-project.github.io/kuberay-helm/
