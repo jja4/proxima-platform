@@ -68,7 +68,13 @@ variable "machine_type" {
 }
 
 variable "initial_node_count" {
-  description = "Initial number of nodes in the management cluster"
+  description = "Initial number of nodes in the management cluster (bootstrap only)"
+  type        = number
+  default     = 1
+}
+
+variable "node_count" {
+  description = "Actual number of nodes in the management pool"
   type        = number
   default     = 1
 }

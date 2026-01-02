@@ -85,7 +85,7 @@ resource "google_container_node_pool" "management_nodes" {
   location   = var.location
   cluster    = google_container_cluster.management.name
   project    = var.project_id
-  node_count = var.initial_node_count
+  node_count = var.node_count
 
   node_config {
     machine_type    = var.machine_type

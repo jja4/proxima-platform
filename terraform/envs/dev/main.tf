@@ -108,6 +108,7 @@ module "management_cluster" {
   
   machine_type       = "e2-medium"  # 2 vCPU, 4GB RAM (~$25/mo) - Required for system pods + ArgoCD/Backstage
   initial_node_count = 1
+  node_count         = 3
 
   depends_on = [
     module.vpc,
@@ -251,6 +252,7 @@ resource "kubernetes_secret" "argocd_repo" {
   }
 
   data = {
+    name       = "proxima-platform"
     type       = "git"
     url        = var.git_repo_url
     project-id = var.project_id
@@ -293,6 +295,47 @@ resource "kubectl_manifest" "argocd_bootstrap" {
   ]
 }
 
+# Deploy AppProjects first (required by all Applications)
+resource "kubectl_manifest" "platform_team_project" {
+  yaml_body = file("${path.module}/../../../gitops/projects/platform-team.yaml")
+
+  depends_on = [helm_release.argocd]
+}
+
+resource "kubectl_manifest" "workload_teams_project" {
+  yaml_body = file("${path.module}/../../../gitops/projects/workload-teams.yaml")
+
+  depends_on = [helm_release.argocd]
+}
+
+# Register the Management Cluster (Local) with metadata
+resource "kubernetes_secret" "management_cluster" {
+  metadata {
+    name      = "management-cluster-secret"
+    namespace = "argocd"
+    labels = {
+      "argocd.argoproj.io/secret-type" = "cluster"
+      "cluster-name"                  = "management-cluster"
+      "cluster-type"                  = "management"
+    }
+    annotations = {
+      "repo-url" = var.git_repo_url
+    }
+  }
+
+  data = {
+    name   = "management-cluster"
+    server = "https://kubernetes.default.svc"
+    config = jsonencode({
+      tlsClientConfig = {
+        insecure = true
+      }
+    })
+  }
+
+  depends_on = [helm_release.argocd]
+}
+
 # Create workload cluster registration Secret
 resource "kubernetes_secret" "workload_cluster" {
   metadata {
@@ -300,6 +343,11 @@ resource "kubernetes_secret" "workload_cluster" {
     namespace = "argocd"
     labels = {
       "argocd.argoproj.io/secret-type" = "cluster"
+      "cluster-name"                  = "workload-cluster"
+      "cluster-type"                  = "workload"
+    }
+    annotations = {
+      "repo-url" = var.git_repo_url
     }
   }
 
