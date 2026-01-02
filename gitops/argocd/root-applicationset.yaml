@@ -49,8 +49,6 @@ spec:
   template:
     metadata:
       name: '{{.path.basename}}'
-      labels:
-        app-type: '{{.path[0]}}'  # infrastructure or apps
     spec:
       project: platform-team  # All apps belong to the platform-team project
       
