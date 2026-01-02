@@ -21,7 +21,7 @@ spec:
             matchLabels:
               cluster-type: management
       - git:
-          repoURL: '{{.metadata.annotations.repo-url}}'
+          repoURL: '{{ index .metadata.annotations "repo-url" }}'
           revision: gitops
           directories:
           - path: gitops/infrastructure/*
@@ -37,7 +37,7 @@ spec:
             matchLabels:
               cluster-type: workload
       - git:
-          repoURL: '{{.metadata.annotations.repo-url}}'
+          repoURL: '{{ index .metadata.annotations "repo-url" }}'
           revision: gitops
           directories:
           - path: gitops/apps/kuberay-operator
@@ -51,7 +51,7 @@ spec:
       project: platform-team  # All apps belong to the platform-team project
       
       source:
-        repoURL: '{{.metadata.annotations.repo-url}}'
+        repoURL: '{{ index .metadata.annotations "repo-url" }}'
         targetRevision: gitops
         path: '{{.path.path}}'
       
@@ -100,7 +100,7 @@ spec:
     spec:
       project: default
       source:
-        repoURL: '{{.metadata.annotations.repo-url}}'
+        repoURL: '{{ index .metadata.annotations "repo-url" }}'
         targetRevision: gitops
         path: '{{.path}}'
       destination:
