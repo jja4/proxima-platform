@@ -6,22 +6,24 @@ metadata:
   name: ml-platform-root
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "1"  # After ArgoCD manages itself
+    argocd.argoproj.io/sync-wave: "2"  # After AppProjects are created
 spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   
   generators:
   # 1. Platform Stack (Management Cluster)
-  # Includes Infrastructure (ESO, Crossplane) and Platform Apps (Backstage, Grafana)
+  # Includes Infrastructure (ESO, Crossplane, Cert-Manager) and Platform Apps (Backstage, Grafana)
   - matrix:
       generators:
       - clusters:
           selector:
             matchLabels:
               cluster-type: management
+          values:
+            repoUrl: '{{.metadata.annotations.repo-url}}'
       - git:
-          repoURL: '{{ index .metadata.annotations "repo-url" }}'
+          repoURL: '{{.values.repoUrl}}'
           revision: gitops
           directories:
           - path: gitops/infrastructure/*
@@ -36,8 +38,10 @@ spec:
           selector:
             matchLabels:
               cluster-type: workload
+          values:
+            repoUrl: '{{.metadata.annotations.repo-url}}'
       - git:
-          repoURL: '{{ index .metadata.annotations "repo-url" }}'
+          repoURL: '{{.values.repoUrl}}'
           revision: gitops
           directories:
           - path: gitops/apps/kuberay-operator
@@ -46,12 +50,12 @@ spec:
     metadata:
       name: '{{.path.basename}}'
       labels:
-        app-source: '{{.path.path}}'
+        app-type: '{{.path[0]}}'  # infrastructure or apps
     spec:
       project: platform-team  # All apps belong to the platform-team project
       
       source:
-        repoURL: '{{ index .metadata.annotations "repo-url" }}'
+        repoURL: '{{.values.repoUrl}}'
         targetRevision: gitops
         path: '{{.path.path}}'
       
@@ -73,40 +77,3 @@ spec:
             duration: 5s
             factor: 2
             maxDuration: 3m
----
-apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
-metadata:
-  name: ml-platform-projects
-  namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "0"  # Deploy projects first
-spec:
-  goTemplate: true
-  generators:
-  - matrix:
-      generators:
-      - clusters:
-          selector:
-            matchLabels:
-              cluster-type: management
-      - list:
-          elements:
-          - name: platform-projects
-            path: gitops/projects
-  template:
-    metadata:
-      name: '{{.name}}'
-    spec:
-      project: default
-      source:
-        repoURL: '{{ index .metadata.annotations "repo-url" }}'
-        targetRevision: gitops
-        path: '{{.path}}'
-      destination:
-        server: '{{.server}}'
-        namespace: argocd
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
