@@ -1,8 +1,9 @@
-# Bootstrap Application - ArgoCD Self-Management + Root ApplicationSet
-# This Application tells ArgoCD to:
-# 1. Manage itself from the gitops/argocd/ directory (including the root ApplicationSet)
-# 2. Deploy the root ApplicationSet which auto-discovers all apps
-# After Terraform applies this, ArgoCD takes full control of the platform
+# Bootstrap Application - GitOps Handoff
+# This is the bridge from Terraform to GitOps:
+# 1. Terraform installs ArgoCD and creates this Application
+# 2. This Application syncs gitops/argocd/ directory (contains root ApplicationSet)
+# 3. Root ApplicationSet auto-discovers and deploys all platform apps
+# Result: Declarative, self-healing platform managed entirely from Git
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
