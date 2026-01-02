@@ -1,5 +1,5 @@
 # Root ApplicationSet - Auto-discovers and manages all platform applications
-# This is applied by the bootstrap Application and triggers the App-of-Apps pattern
+# This ApplicationSet uses the Git Files generator to directly apply Application manifests
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -12,66 +12,35 @@ spec:
   goTemplateOptions: ["missingkey=error"]
   
   generators:
-  # 1. Platform Stack (Management Cluster)
-  # Includes Infrastructure (ESO, Crossplane, Cert-Manager) and Platform Apps (Backstage, Grafana)
-  - matrix:
-      generators:
-      - clusters:
-          selector:
-            matchLabels:
-              cluster-type: management
-          values:
-            repoUrl: '{{index .metadata.annotations "repo-url"}}'
-      - git:
-          repoURL: '{{.values.repoUrl}}'
-          revision: gitops
-          directories:
-          - path: gitops/infrastructure/*
-          - path: gitops/apps/backstage
-          - path: gitops/apps/grafana
+  # 1. Platform Stack (Management Cluster) - Discover Application manifests
+  - git:
+      repoURL: https://github.com/jja4/proxima-platform.git
+      revision: gitops
+      files:
+      - path: "gitops/infrastructure/*/application.yaml"
+      - path: "gitops/apps/backstage/application.yaml"
+      - path: "gitops/apps/grafana/application.yaml"
   
-  # 2. Compute Stack (Workload Cluster)
-  # Includes ML-specific operators and jobs that need GPU/Autopilot scaling
-  - matrix:
-      generators:
-      - clusters:
-          selector:
-            matchLabels:
-              cluster-type: workload
-          values:
-            repoUrl: '{{index .metadata.annotations "repo-url"}}'
-      - git:
-          repoURL: '{{.values.repoUrl}}'
-          revision: gitops
-          directories:
-          - path: gitops/apps/kuberay-operator
+  # 2. Compute Stack (Workload Cluster) - Discover Application manifests  
+  - git:
+      repoURL: https://github.com/jja4/proxima-platform.git
+      revision: gitops
+      files:
+      - path: "gitops/apps/kuberay-operator/application.yaml"
 
   template:
     metadata:
-      name: '{{.path.basename}}'
+      name: '{{.path.basenameNormalized}}'
     spec:
-      project: platform-team  # All apps belong to the platform-team project
-      
+      project: default
       source:
-        repoURL: '{{.values.repoUrl}}'
+        repoURL: https://github.com/jja4/proxima-platform.git
         targetRevision: gitops
         path: '{{.path.path}}'
-      
       destination:
-        server: '{{.server}}'
-        namespace: '{{.path.basename}}'  # Namespace matches folder name
-      
+        server: https://kubernetes.default.svc
+        namespace: argocd
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
-          allowEmpty: false
-        syncOptions:
-        - CreateNamespace=true
-        - PruneLast=true
-        retry:
-          limit: 5
-          backoff:
-            duration: 5s
-            factor: 2
-            maxDuration: 3m
