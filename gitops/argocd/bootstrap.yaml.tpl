@@ -1,10 +1,12 @@
-# Bootstrap Application - ArgoCD Self-Management
-# This Application tells ArgoCD to manage itself from the gitops/argocd/ directory
-# After Terraform applies this, ArgoCD takes full control of its own configuration
+# Bootstrap Application - ArgoCD Self-Management + Root ApplicationSet
+# This Application tells ArgoCD to:
+# 1. Manage itself from the gitops/argocd/ directory (including the root ApplicationSet)
+# 2. Deploy the root ApplicationSet which auto-discovers all apps
+# After Terraform applies this, ArgoCD takes full control of the platform
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: argocd-self-managed
+  name: argocd-bootstrap
   namespace: argocd
   finalizers:
   - resources-finalizer.argocd.argoproj.io

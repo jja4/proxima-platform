@@ -12,21 +12,12 @@ spec:
   
   # Source repositories the project can deploy from
   sourceRepos:
-  - 'proxima-platform'  # References the registered repo by name
-  - 'https://*.github.com/*'  # Allow Helm charts from GitHub
-  - 'https://charts.crossplane.io/stable'
-  - 'https://grafana.github.io/helm-charts'
-  - 'https://prometheus-community.github.io/helm-charts'
-  - 'https://kubernetes.github.io/ingress-nginx'
-  - 'https://ray-project.github.io/kuberay-helm'
-  - 'https://external-secrets.github.io/kubernetes-external-secrets'
+  - '*'  # Allow any repo for platform team
   
   # Destinations - where apps can be deployed
   destinations:
   - namespace: '*'
-    name: management-cluster  # Management cluster (where ArgoCD runs)
-  - namespace: '*'
-    name: workload-cluster  # Workload cluster (for Ray jobs)
+    server: '*'  # Allow any cluster for platform team
   
   # Cluster resource whitelist - what K8s resources can be created
   clusterResourceWhitelist:
