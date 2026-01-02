@@ -12,38 +12,35 @@ spec:
   goTemplateOptions: ["missingkey=error"]
   
   generators:
-  # Projects - ArgoCD RBAC (deployed first)
-  - git:
-      repoURL: proxima-platform
-      revision: gitops
-      files:
-      - path: "gitops/projects/*.yaml"
-  
-  # Infrastructure - Platform tools like External Secrets, Crossplane
+  # 1. Platform Stack (Management Cluster)
+  # Includes Infrastructure (ESO, Crossplane) and Platform Apps (Backstage, Grafana)
   - matrix:
       generators:
+      - clusters:
+          selector:
+            matchLabels:
+              cluster-type: management
       - git:
-          repoURL: proxima-platform
+          repoURL: '{{.metadata.annotations.repo-url}}'
           revision: gitops
           directories:
           - path: gitops/infrastructure/*
-      - list:
-          elements:
-          - cluster: management-cluster
-            server: https://kubernetes.default.svc
+          - path: gitops/apps/backstage
+          - path: gitops/apps/grafana
   
-  # Apps - Application deployments like Backstage, Grafana
+  # 2. Compute Stack (Workload Cluster)
+  # Includes ML-specific operators and jobs that need GPU/Autopilot scaling
   - matrix:
       generators:
+      - clusters:
+          selector:
+            matchLabels:
+              cluster-type: workload
       - git:
-          repoURL: proxima-platform
+          repoURL: '{{.metadata.annotations.repo-url}}'
           revision: gitops
           directories:
-          - path: gitops/apps/*
-      - list:
-          elements:
-          - cluster: in-cluster
-            server: https://kubernetes.default.svc
+          - path: gitops/apps/kuberay-operator
 
   template:
     metadata:
@@ -51,11 +48,11 @@ spec:
       labels:
         app-source: '{{.path.path}}'
     spec:
-      project: platform  # All apps belong to the platform project
+      project: platform-team  # All apps belong to the platform-team project
       
       source:
-        repoURL: proxima-platform
-        targetRevision: main
+        repoURL: '{{.metadata.annotations.repo-url}}'
+        targetRevision: gitops
         path: '{{.path.path}}'
       
       destination:
@@ -76,3 +73,42 @@ spec:
             duration: 5s
             factor: 2
             maxDuration: 3m
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: ml-platform-projects
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"  # Deploy projects first
+spec:
+  goTemplate: true
+  generators:
+  - matrix:
+      generators:
+      - clusters:
+          selector:
+            matchLabels:
+              cluster-type: management
+      - list:
+          elements:
+          - name: platform-projects
+            path: gitops/projects
+  template:
+    metadata:
+      name: '{{.name}}'
+    spec:
+      project: default
+      source:
+        repoURL: '{{.metadata.annotations.repo-url}}'
+        targetRevision: gitops
+        path: '{{.path}}'
+      destination:
+        server: '{{.server}}'
+        namespace: argocd
+        server: https://kubernetes.default.svc
+        namespace: argocd
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
