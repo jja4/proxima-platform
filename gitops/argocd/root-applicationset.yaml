@@ -21,7 +21,7 @@ spec:
             matchLabels:
               cluster-type: management
           values:
-            repoUrl: '{{.metadata.annotations.repo-url}}'
+            repoUrl: '{{index .metadata.annotations "repo-url"}}'
       - git:
           repoURL: '{{.values.repoUrl}}'
           revision: gitops
@@ -39,7 +39,7 @@ spec:
             matchLabels:
               cluster-type: workload
           values:
-            repoUrl: '{{.metadata.annotations.repo-url}}'
+            repoUrl: '{{index .metadata.annotations "repo-url"}}'
       - git:
           repoURL: '{{.values.repoUrl}}'
           revision: gitops
