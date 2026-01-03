@@ -22,6 +22,11 @@ spec:
           packages:
           - xpkg.upbound.io/upbound/provider-gcp:v0.41.0
         
+        # Match GKE-injected annotations to avoid drift
+        service:
+          customAnnotations:
+            cloud.google.com/neg: '{"ingress":true}'
+
         resources:
           requests:
             cpu: 100m
