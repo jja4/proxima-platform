@@ -108,7 +108,7 @@ module "management_cluster" {
   
   machine_type       = "e2-medium"  # 2 vCPU, 4GB RAM (~$25/mo) - Required for system pods + ArgoCD/Backstage
   initial_node_count = 1
-  node_count         = 3
+  node_count         = 5
 
   depends_on = [
     module.vpc,

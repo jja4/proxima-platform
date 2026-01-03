@@ -12,25 +12,26 @@ spec:
   source:
     repoURL: https://backstage.github.io/charts
     chart: backstage
-    targetRevision: 1.12.6
+    targetRevision: 2.6.3
     
     helm:
       values: |
         backstage:
           image:
-            registry: gcr.io
-            repository: backstage-release/backstage
+            registry: ghcr.io
+            repository: backstage/backstage
             tag: latest
-          
+
+          # Lighter requests to fit the demo cluster; adjust upward in production.
           resources:
             requests:
-              cpu: 200m
-              memory: 512Mi
+              cpu: 50m
+              memory: 256Mi
             limits:
-              cpu: 1000m
-              memory: 2Gi
-          
-          envVars:
+              cpu: 500m
+              memory: 1Gi
+
+          extraEnvVars:
           - name: POSTGRES_HOST
             value: postgres.backstage.svc.cluster.local
           - name: POSTGRES_PORT
@@ -43,17 +44,19 @@ spec:
           auth:
             username: backstage
             database: backstage
+          # Keep Postgres small for demo; increase for real workloads.
           resources:
             requests:
-              cpu: 100m
-              memory: 256Mi
+              cpu: 50m
+              memory: 128Mi
             limits:
-              cpu: 500m
-              memory: 1Gi
+              cpu: 300m
+              memory: 512Mi
         
         service:
           type: ClusterIP
-          port: 7007
+          ports:
+            backend: 7007
         
         ingress:
           enabled: false  # We'll add this later with cert-manager
