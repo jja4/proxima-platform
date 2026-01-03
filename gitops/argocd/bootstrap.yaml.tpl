@@ -20,7 +20,7 @@ spec:
     path: gitops
     directory:
       recurse: true
-      include: "{**/application.yaml,projects/*.yaml,clusters/**/namespaces.yaml,infrastructure/config/platform-config.yaml}"
+      include: "{**/application.yaml,projects/*.yaml,clusters/**/namespaces.yaml}"
       exclude: "argocd/**"
   
   destination:
