@@ -366,7 +366,7 @@ metadata:
 data:
   project_id: ${var.project_id}
   region: ${var.region}
-  github_raw_base_url: ${replace(replace(var.git_repo_url, "github.com", "raw.githubusercontent.com"), ".git", "")}
+  github_raw_base_url: ${trimsuffix(replace(var.git_repo_url, "github.com", "raw.githubusercontent.com"), ".git")}
 YAML
   depends_on = [module.management_cluster]
 }
@@ -387,10 +387,17 @@ data:
     backend:
       baseUrl: http://localhost:7007
     
+    # Guest authentication for development
+    auth:
+      environment: development
+      providers:
+        guest:
+          dangerouslyAllowOutsideDevelopment: true
+    
     catalog:
       locations:
         - type: url
-          target: ${replace(replace(var.git_repo_url, "github.com", "raw.githubusercontent.com"), ".git", "")}/${var.git_branch}/gitops/apps/backstage/templates/submit-job.yaml
+          target: ${trimsuffix(replace(var.git_repo_url, "github.com", "raw.githubusercontent.com"), ".git")}/${var.git_branch}/gitops/apps/backstage/templates/submit-job.yaml
           rules:
             - allow: [Template]
     
