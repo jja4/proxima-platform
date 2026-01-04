@@ -21,14 +21,6 @@ spec:
             repository: backstage/backstage
             tag: latest
 
-          # Use ServiceAccount for Kubernetes API access
-          serviceAccount:
-            create: true
-            name: backstage
-            annotations: {}
-            labels:
-              app: backstage
-
           resources:
             requests:
               cpu: 50m
@@ -70,6 +62,14 @@ spec:
               clusterLocatorMethods:
                 - type: config
                   clusters: []  # Populated from dynamic config
+        
+        # Use ServiceAccount for Kubernetes API access
+        serviceAccount:
+          create: true
+          name: backstage
+          annotations: {}
+          labels:
+            app: backstage
         
         # Extra Kubernetes manifests for RBAC
         extraObjects:
