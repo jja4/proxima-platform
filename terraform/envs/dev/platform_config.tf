@@ -146,7 +146,7 @@ resource "kubernetes_secret" "workload_cluster" {
     config = jsonencode({
       tlsClientConfig = {
         insecure = false
-        caData   = base64encode(module.workload_cluster.cluster_ca_certificate)
+        caData   = module.workload_cluster.cluster_ca_certificate
       }
     })
   }
