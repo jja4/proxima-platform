@@ -430,3 +430,22 @@ resource "kubernetes_secret" "backstage_workload_cluster" {
     data.kubernetes_secret.argocd_manager_token
   ]
 }
+
+# Backstage backend auth secret (generated, not stored in Git)
+resource "kubernetes_secret" "backstage_backend_auth" {
+  metadata {
+    name      = "backstage-backend-auth"
+    namespace = "backstage"
+  }
+
+  data = {
+    BACKEND_SECRET = random_password.backstage_backend_secret.result
+  }
+
+  depends_on = [module.management_cluster]
+}
+
+resource "random_password" "backstage_backend_secret" {
+  length  = 32
+  special = true
+}

@@ -29,6 +29,10 @@ spec:
               cpu: 500m
               memory: 1Gi
 
+          # Environment variables for backend auth
+          extraEnvVarsSecrets:
+          - backstage-backend-auth
+
           # Mount the dynamic config from Terraform-managed ConfigMap
           extraVolumes:
           - name: dynamic-config

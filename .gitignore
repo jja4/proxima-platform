@@ -42,7 +42,7 @@ coverage.xml
 
 # Terraform
 terraform/.terraform/
-terraform/.terraform.lock.hcl
+!terraform/.terraform.lock.hcl
 terraform/envs/*/.terraform/
 terraform/envs/*/.terraform.lock.hcl
 terraform/envs/*/terraform.tfstate
