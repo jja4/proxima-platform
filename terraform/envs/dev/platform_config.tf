@@ -370,6 +370,48 @@ YAML
   depends_on = [module.management_cluster]
 }
 
+# Backstage app-config with dynamic values injected from Terraform
+resource "kubectl_manifest" "backstage_app_config" {
+  yaml_body = <<YAML
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backstage-dynamic-config
+  namespace: backstage
+data:
+  app-config.dynamic.yaml: |
+    app:
+      baseUrl: http://localhost:7007
+    
+    backend:
+      baseUrl: http://localhost:7007
+    
+    catalog:
+      locations:
+        - type: url
+          target: ${replace(replace(var.git_repo_url, "github.com", "raw.githubusercontent.com"), ".git", "")}/gitops/apps/backstage/templates/submit-job.yaml
+          rules:
+            - allow: [Template]
+    
+    kubernetes:
+      serviceLocatorMethod:
+        type: multiTenant
+      clusterLocatorMethods:
+        - type: config
+          clusters:
+            - url: https://${module.workload_cluster.cluster_endpoint}
+              name: workload-cluster
+              authProvider: serviceAccount
+              serviceAccountToken: ${data.kubernetes_secret.argocd_manager_token.data.token}
+              skipTLSVerify: true
+YAML
+  depends_on = [
+    module.management_cluster,
+    module.workload_cluster,
+    data.kubernetes_secret.argocd_manager_token
+  ]
+}
+
 # Workload cluster credentials for Backstage Kubernetes plugin
 resource "kubernetes_secret" "backstage_workload_cluster" {
   metadata {

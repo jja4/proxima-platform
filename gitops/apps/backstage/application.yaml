@@ -22,7 +22,6 @@ spec:
             repository: backstage/backstage
             tag: latest
 
-          # Lighter requests to fit the demo cluster; adjust upward in production.
           resources:
             requests:
               cpu: 50m
@@ -31,53 +30,20 @@ spec:
               cpu: 500m
               memory: 1Gi
 
-          appConfig:
-            app:
-              baseUrl: http://localhost:7007
-            
-            backend:
-              baseUrl: http://localhost:7007
-            
-            platform:
-              projectId: ${PROJECT_ID}
-              region: ${REGION}
-            
-            catalog:
-              locations:
-                - type: url
-                  target: ${GITHUB_RAW_BASE_URL}/gitops/apps/backstage/templates/submit-job.yaml
-                  rules:
-                    - allow: [Template]
-            
-            kubernetes:
-              serviceLocatorMethod:
-                type: multiTenant
-              clusterLocatorMethods:
-                - type: config
-                  clusters:
-                    - url: ${WORKLOAD_CLUSTER_URL}
-                      name: workload-cluster
-                      authProvider: serviceAccount
-                      serviceAccountToken: ${WORKLOAD_CLUSTER_TOKEN}
-                      skipTLSVerify: true
+          # Mount the dynamic config from Terraform-managed ConfigMap
+          extraVolumes:
+          - name: dynamic-config
+            configMap:
+              name: backstage-dynamic-config
+              defaultMode: 420
 
-          extraEnvVars:
-          - name: POSTGRES_HOST
-            value: backstage-postgresql
-          - name: POSTGRES_PORT
-            value: "5432"
-          - name: POSTGRES_USER
-            value: backstage
-          - name: PROJECT_ID
-            valueFrom:
-              configMapKeyRef:
-                name: platform-config
-                key: project_id
-          - name: REGION
-            valueFrom:
-              configMapKeyRef:
-                name: platform-config
-                key: region
+          extraVolumeMounts:
+          - name: dynamic-config
+            mountPath: /app/app-config.dynamic.yaml
+            subPath: app-config.dynamic.yaml
+            readOnly: true
+
+          appConfig: {}  # Empty - config comes from mounted ConfigMap
           - name: GITHUB_RAW_BASE_URL
             valueFrom:
               configMapKeyRef:
