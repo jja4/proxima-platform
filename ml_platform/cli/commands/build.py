@@ -42,7 +42,10 @@ def run(args):
         print(f"❌ No Dockerfile in {workload_dir}")
         sys.exit(1)
     
-    region = "europe-west3"
+    region, _ = run_cmd("gcloud config get-value compute/region 2>/dev/null")
+    if not region:
+        region = "europe-west3"  # Default fallback
+        
     image = f"{region}-docker.pkg.dev/{project_id}/ml-platform/{workload}:{version}"
     image_latest = f"{region}-docker.pkg.dev/{project_id}/ml-platform/{workload}:latest"
     

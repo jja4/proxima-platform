@@ -41,19 +41,37 @@ def run(args):
     
     workload, version = workload_version.split(':', 1)
     
-    # Get project ID
+    # Get project ID and region
     project_id, _ = run_cmd("gcloud config get-value project 2>/dev/null")
     if not project_id:
         print("❌ No GCP project configured. Run: gcloud config set project PROJECT_ID")
         sys.exit(1)
     
-    region = "europe-west3"
+    region, _ = run_cmd("gcloud config get-value compute/region 2>/dev/null")
+    if not region:
+        region = "europe-west3"  # Default fallback
+    
     image = f"{region}-docker.pkg.dev/{project_id}/ml-platform/{workload}:{version}"
     job_name = f"{workload}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
     
     print(f"🚀 Submitting: {job_name}")
     print(f"   Image: {image}")
     print(f"   TTL: {ttl_seconds}s (auto-cleanup after completion)\n")
+    
+    # Check for workload cluster context
+    kubectl_cmd = ["kubectl", "apply", "-f", "-"]
+    
+    # Try to use 'workload' context if available
+    contexts = subprocess.run(
+        "kubectl config get-contexts -o name", 
+        shell=True, capture_output=True, text=True
+    ).stdout.splitlines()
+    
+    if "workload" in contexts:
+        print("🌍 Targeting cluster: workload")
+        kubectl_cmd.extend(["--context", "workload"])
+    else:
+        print("⚠️  'workload' context not found. Using current context.")
     
     manifest = f"""
 apiVersion: batch/v1
