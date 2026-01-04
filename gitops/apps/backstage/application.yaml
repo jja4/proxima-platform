@@ -67,7 +67,6 @@ spec:
           extraEnvVarsSecrets:
           - backstage-postgresql
 
-        backstage:
           appConfig:
             app:
               baseUrl: http://localhost:7007
@@ -82,7 +81,7 @@ spec:
             catalog:
               locations:
                 - type: url
-                  target: ${GITHUB_RAW_BASE_URL}/gitops/gitops/apps/backstage/templates/submit-job.yaml
+                  target: ${GITHUB_RAW_BASE_URL}/gitops/apps/backstage/templates/submit-job.yaml
                   rules:
                     - allow: [Template]
             
