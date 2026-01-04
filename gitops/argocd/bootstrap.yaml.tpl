@@ -15,8 +15,8 @@ spec:
   project: default
   
   source:
-    repoURL: ${repo_url}
-    targetRevision: gitops
+    repoURL: ${git_repo_url}
+    targetRevision: ${git_branch}
     path: gitops
     directory:
       recurse: true

@@ -9,11 +9,10 @@ metadata:
 spec:
   project: platform-team
   
-  source:
-    repoURL: https://backstage.github.io/charts
+  sources:
+  - repoURL: https://backstage.github.io/charts
     chart: backstage
     targetRevision: 2.6.3
-    
     helm:
       values: |
         backstage:
@@ -21,6 +20,14 @@ spec:
             registry: ghcr.io
             repository: backstage/backstage
             tag: latest
+
+          # Use ServiceAccount for Kubernetes API access
+          serviceAccount:
+            create: true
+            name: backstage
+            annotations: {}
+            labels:
+              app: backstage
 
           resources:
             requests:
@@ -49,6 +56,53 @@ spec:
               baseUrl: http://localhost:7007
             backend:
               baseUrl: http://localhost:7007
+              auth:
+                keys:
+                  - secret: ${BACKEND_SECRET}
+              # In-cluster Kubernetes authentication
+              csp:
+                connect-src: ["'self'", 'http:', 'https:']
+            
+            # Enable Kubernetes plugin for in-cluster resources
+            kubernetes:
+              serviceLocatorMethod:
+                type: multiTenant
+              clusterLocatorMethods:
+                - type: config
+                  clusters: []  # Populated from dynamic config
+        
+        # Extra Kubernetes manifests for RBAC
+        extraObjects:
+        - apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRole
+          metadata:
+            name: backstage-catalog-reader
+            labels:
+              app: backstage
+          rules:
+          - apiGroups: [""]
+            resources: ["pods", "services", "configmaps"]
+            verbs: ["get", "list", "watch"]
+          - apiGroups: ["apps"]
+            resources: ["deployments", "replicasets", "statefulsets"]
+            verbs: ["get", "list", "watch"]
+          - apiGroups: ["batch"]
+            resources: ["jobs", "cronjobs"]
+            verbs: ["get", "list", "watch"]
+        - apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:
+            name: backstage-catalog-reader
+            labels:
+              app: backstage
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: backstage-catalog-reader
+          subjects:
+          - kind: ServiceAccount
+            name: backstage
+            namespace: backstage
         
         postgresql:
           enabled: true

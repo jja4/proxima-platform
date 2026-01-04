@@ -40,3 +40,9 @@ variable "git_repo_url" {
   type        = string
   default     = "https://github.com/YOUR_ORG/proxima-platform.git"
 }
+
+variable "git_branch" {
+  description = "Git branch for GitOps and Backstage template references"
+  type        = string
+  default     = "main"
+}

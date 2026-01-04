@@ -74,7 +74,8 @@ resource "kubernetes_secret" "argocd_repo" {
 # Apply the bootstrap Application (The Handoff)
 resource "kubectl_manifest" "argocd_bootstrap" {
   yaml_body = templatefile("${path.module}/../../../gitops/argocd/bootstrap.yaml.tpl", {
-    repo_url = var.git_repo_url
+    git_repo_url   = var.git_repo_url
+    git_branch = var.git_branch
   })
 
   depends_on = [
@@ -108,7 +109,7 @@ resource "kubernetes_secret" "management_cluster" {
       "cluster-type"                  = "management"
     }
     annotations = {
-      "repo-url" = var.git_repo_url
+      "git-repo-url" = var.git_repo_url
     }
   }
 
@@ -146,7 +147,7 @@ resource "kubernetes_secret" "workload_cluster" {
       "cluster-type"                  = "workload"
     }
     annotations = {
-      "repo-url" = var.git_repo_url
+      "git-repo-url" = var.git_repo_url
     }
   }
 
@@ -182,7 +183,7 @@ spec:
   project: platform-team
   source:
     repoURL: ${var.git_repo_url}
-    targetRevision: gitops
+    targetRevision: ${var.git_branch}
     path: gitops/clusters/management-cluster
   destination:
     server: https://kubernetes.default.svc
@@ -210,7 +211,7 @@ spec:
   project: platform-team
   source:
     repoURL: ${var.git_repo_url}
-    targetRevision: gitops
+    targetRevision: ${var.git_branch}
     path: gitops/clusters/workload-cluster
   destination:
     name: workload-cluster
@@ -242,7 +243,7 @@ spec:
   project: platform-team
   source:
     repoURL: ${var.git_repo_url}
-    targetRevision: gitops
+    targetRevision: ${var.git_branch}
     path: kubernetes/ray
   destination:
     name: workload-cluster
@@ -389,7 +390,7 @@ data:
     catalog:
       locations:
         - type: url
-          target: ${replace(replace(var.git_repo_url, "github.com", "raw.githubusercontent.com"), ".git", "")}/gitops/apps/backstage/templates/submit-job.yaml
+          target: ${replace(replace(var.git_repo_url, "github.com", "raw.githubusercontent.com"), ".git", "")}/${var.git_branch}/gitops/apps/backstage/templates/submit-job.yaml
           rules:
             - allow: [Template]
     

@@ -4,6 +4,7 @@ region                    = "europe-west3"
 management_cluster_zone   = "europe-west3-a"
 grafana_admin_password    = "changeme-in-production"
 git_repo_url              = "https://github.com/YOUR_ORG/proxima-platform.git"
+git_branch                = "main"  
 terraform_user_list       = [	
     "serviceAccount:terraform-sa@your-gcp-project-id.iam.gserviceaccount.com",
     "user:your.name@example.com"
