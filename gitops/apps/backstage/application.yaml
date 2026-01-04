@@ -47,6 +47,7 @@ spec:
             readOnly: true
 
           # Base config - extended by mounted dynamic config
+          # All environment-specific config (auth, catalog, kubernetes) is in the dynamic ConfigMap
           appConfig:
             app:
               baseUrl: http://localhost:7007
@@ -55,17 +56,8 @@ spec:
               auth:
                 keys:
                   - secret: ${BACKEND_SECRET}
-              # In-cluster Kubernetes authentication
               csp:
                 connect-src: ["'self'", 'http:', 'https:']
-            
-            # Enable Kubernetes plugin for in-cluster resources
-            kubernetes:
-              serviceLocatorMethod:
-                type: multiTenant
-              clusterLocatorMethods:
-                - type: config
-                  clusters: []  # Populated from dynamic config
         
         # Use ServiceAccount for Kubernetes API access
         serviceAccount:
