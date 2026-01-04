@@ -31,6 +31,36 @@ spec:
               cpu: 500m
               memory: 1Gi
 
+          appConfig:
+            app:
+              baseUrl: http://localhost:7007
+            
+            backend:
+              baseUrl: http://localhost:7007
+            
+            platform:
+              projectId: ${PROJECT_ID}
+              region: ${REGION}
+            
+            catalog:
+              locations:
+                - type: url
+                  target: ${GITHUB_RAW_BASE_URL}/gitops/apps/backstage/templates/submit-job.yaml
+                  rules:
+                    - allow: [Template]
+            
+            kubernetes:
+              serviceLocatorMethod:
+                type: multiTenant
+              clusterLocatorMethods:
+                - type: config
+                  clusters:
+                    - url: ${WORKLOAD_CLUSTER_URL}
+                      name: workload-cluster
+                      authProvider: serviceAccount
+                      serviceAccountToken: ${WORKLOAD_CLUSTER_TOKEN}
+                      skipTLSVerify: true
+
           extraEnvVars:
           - name: POSTGRES_HOST
             value: backstage-postgresql
@@ -66,36 +96,6 @@ spec:
 
           extraEnvVarsSecrets:
           - backstage-postgresql
-
-          appConfig:
-            app:
-              baseUrl: http://localhost:7007
-            
-            backend:
-              baseUrl: http://localhost:7007
-            
-            platform:
-              projectId: ${PROJECT_ID}
-              region: ${REGION}
-            
-            catalog:
-              locations:
-                - type: url
-                  target: ${GITHUB_RAW_BASE_URL}/gitops/apps/backstage/templates/submit-job.yaml
-                  rules:
-                    - allow: [Template]
-            
-            kubernetes:
-              serviceLocatorMethod:
-                type: multiTenant
-              clusterLocatorMethods:
-                - type: config
-                  clusters:
-                    - url: ${WORKLOAD_CLUSTER_URL}
-                      name: workload-cluster
-                      authProvider: serviceAccount
-                      serviceAccountToken: ${WORKLOAD_CLUSTER_TOKEN}
-                      skipTLSVerify: true
         
         postgresql:
           enabled: true
