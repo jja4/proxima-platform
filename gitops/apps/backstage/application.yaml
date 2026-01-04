@@ -43,25 +43,12 @@ spec:
             subPath: app-config.dynamic.yaml
             readOnly: true
 
-          appConfig: {}  # Empty - config comes from mounted ConfigMap
-          - name: GITHUB_RAW_BASE_URL
-            valueFrom:
-              configMapKeyRef:
-                name: platform-config
-                key: github_raw_base_url
-          - name: WORKLOAD_CLUSTER_URL
-            valueFrom:
-              secretKeyRef:
-                name: backstage-workload-cluster
-                key: url
-          - name: WORKLOAD_CLUSTER_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: backstage-workload-cluster
-                key: token
-
-          extraEnvVarsSecrets:
-          - backstage-postgresql
+          # Base config - extended by mounted dynamic config
+          appConfig:
+            app:
+              baseUrl: http://localhost:7007
+            backend:
+              baseUrl: http://localhost:7007
         
         postgresql:
           enabled: true
