@@ -125,6 +125,16 @@ resource "kubernetes_secret" "management_cluster" {
   depends_on = [helm_release.argocd]
 }
 
+# Data source for fetching ArgoCD manager token from the workload cluster
+data "kubernetes_secret" "argocd_manager_token" {
+  provider = kubernetes.workload
+
+  metadata {
+    name      = "argocd-manager-token"
+    namespace = "argocd"
+  }
+}
+
 # Create workload cluster registration Secret
 resource "kubernetes_secret" "workload_cluster" {
   metadata {
@@ -144,6 +154,7 @@ resource "kubernetes_secret" "workload_cluster" {
     name   = "workload-cluster"
     server = "https://${module.workload_cluster.cluster_endpoint}"
     config = jsonencode({
+      bearerToken = data.kubernetes_secret.argocd_manager_token.data.token
       tlsClientConfig = {
         insecure = false
         caData   = module.workload_cluster.cluster_ca_certificate
@@ -357,4 +368,22 @@ data:
   github_raw_base_url: ${replace(replace(var.git_repo_url, "github.com", "raw.githubusercontent.com"), ".git", "")}
 YAML
   depends_on = [module.management_cluster]
+}
+
+# Workload cluster credentials for Backstage Kubernetes plugin
+resource "kubernetes_secret" "backstage_workload_cluster" {
+  metadata {
+    name      = "backstage-workload-cluster"
+    namespace = kubernetes_namespace.backstage.metadata[0].name
+  }
+
+  data = {
+    url   = "https://${module.workload_cluster.cluster_endpoint}"
+    token = data.kubernetes_secret.argocd_manager_token.data.token
+  }
+
+  depends_on = [
+    module.workload_cluster,
+    data.kubernetes_secret.argocd_manager_token
+  ]
 }

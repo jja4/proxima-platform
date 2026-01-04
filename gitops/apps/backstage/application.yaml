@@ -33,7 +33,7 @@ spec:
 
           extraEnvVars:
           - name: POSTGRES_HOST
-            value: postgres.backstage.svc.cluster.local
+            value: backstage-postgresql
           - name: POSTGRES_PORT
             value: "5432"
           - name: POSTGRES_USER
@@ -63,6 +63,9 @@ spec:
               secretKeyRef:
                 name: backstage-workload-cluster
                 key: token
+
+          extraEnvVarsSecrets:
+          - backstage-postgresql
 
         backstage:
           appConfig:

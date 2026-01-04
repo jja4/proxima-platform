@@ -182,6 +182,14 @@ provider "kubernetes" {
   cluster_ca_certificate = try(base64decode(module.management_cluster.cluster_ca_certificate), null)
 }
 
+# Workload cluster provider for reading the ArgoCD token
+provider "kubernetes" {
+  alias                  = "workload"
+  host                   = try("https://${module.workload_cluster.cluster_endpoint}", null)
+  token                  = try(data.google_client_config.default.access_token, null)
+  cluster_ca_certificate = try(base64decode(module.workload_cluster.cluster_ca_certificate), null)
+}
+
 provider "helm" {
   kubernetes {
     host                   = try("https://${module.management_cluster.cluster_endpoint}", null)
