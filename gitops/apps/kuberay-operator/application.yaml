@@ -35,7 +35,7 @@ spec:
         rbacEnable: true
   
   destination:
-    server: https://kubernetes.default.svc
+    name: workload-cluster
     namespace: kuberay-system
   
   syncPolicy:

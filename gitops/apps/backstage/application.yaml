@@ -38,6 +38,59 @@ spec:
             value: "5432"
           - name: POSTGRES_USER
             value: backstage
+          - name: PROJECT_ID
+            valueFrom:
+              configMapKeyRef:
+                name: platform-config
+                key: project_id
+          - name: REGION
+            valueFrom:
+              configMapKeyRef:
+                name: platform-config
+                key: region
+          - name: GITHUB_RAW_BASE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: platform-config
+                key: github_raw_base_url
+          - name: WORKLOAD_CLUSTER_URL
+            valueFrom:
+              secretKeyRef:
+                name: backstage-workload-cluster
+                key: url
+          - name: WORKLOAD_CLUSTER_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: backstage-workload-cluster
+                key: token
+
+        backstage:
+          appConfig:
+            app:
+              baseUrl: http://localhost:7007
+            
+            platform:
+              projectId: ${PROJECT_ID}
+              region: ${REGION}
+            
+            catalog:
+              locations:
+                - type: url
+                  target: ${GITHUB_RAW_BASE_URL}/gitops/gitops/apps/backstage/templates/submit-job.yaml
+                  rules:
+                    - allow: [Template]
+            
+            kubernetes:
+              serviceLocatorMethod:
+                type: multiTenant
+              clusterLocatorMethods:
+                - type: config
+                  clusters:
+                    - url: ${WORKLOAD_CLUSTER_URL}
+                      name: workload-cluster
+                      authProvider: serviceAccount
+                      serviceAccountToken: ${WORKLOAD_CLUSTER_TOKEN}
+                      skipTLSVerify: true
         
         postgresql:
           enabled: true
@@ -70,4 +123,4 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-    - CreateNamespace=true
+    - ServerSideApply=true

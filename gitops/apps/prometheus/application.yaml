@@ -1,0 +1,42 @@
+# Prometheus - Metrics Collection
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prometheus
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: platform-team
+  
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: prometheus
+    targetRevision: 25.21.0
+    
+    helm:
+      values: |
+        server:
+          persistentVolume:
+            size: 10Gi
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+        
+        alertmanager:
+          enabled: false
+        
+        pushgateway:
+          enabled: false
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
