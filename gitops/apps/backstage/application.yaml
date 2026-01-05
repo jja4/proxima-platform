@@ -66,6 +66,16 @@ spec:
               locations:
                 - type: url
                   target: ${CATALOG_URL}
+                  allowedKinds:
+                    - Location
+                    - Template
+                    - Component
+                    - API
+                    - Resource
+                    - System
+                    - Domain
+                    - Group
+                    - User
             
             # TechDocs configuration (required by Backstage)
             techdocs:
