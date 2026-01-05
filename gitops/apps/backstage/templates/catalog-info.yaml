@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: proxima-templates
+  description: ML Platform Templates
+spec:
+  targets:
+    - ./submit-job.yaml
+    # Add new templates here as you create them:
+    # - ./create-pipeline.yaml
+    # - ./deploy-model.yaml

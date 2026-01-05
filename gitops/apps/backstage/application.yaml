@@ -52,13 +52,11 @@ spec:
                 guest:
                   dangerouslyAllowOutsideDevelopment: true
             
-            # Catalog templates location
+            # Catalog templates location - points to catalog-info.yaml which lists all templates
             catalog:
               locations:
                 - type: file
-                  target: ../../templates/submit-job.yaml
-                  rules:
-                    - allow: [Template]
+                  target: ../../templates/catalog-info.yaml
         
         # Use ServiceAccount for Kubernetes API access
         serviceAccount:
