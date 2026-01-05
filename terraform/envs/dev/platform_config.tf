@@ -397,9 +397,7 @@ data:
     catalog:
       locations:
         - type: url
-          target: ${trimsuffix(replace(var.git_repo_url, "github.com", "raw.githubusercontent.com"), ".git")}/${var.git_branch}/gitops/apps/backstage/templates/submit-job.yaml
-          rules:
-            - allow: [Template]
+          target: ${trimsuffix(replace(var.git_repo_url, "github.com", "raw.githubusercontent.com"), ".git")}/${var.git_branch}/gitops/apps/backstage/templates/catalog-info.yaml
     
     kubernetes:
       serviceLocatorMethod:

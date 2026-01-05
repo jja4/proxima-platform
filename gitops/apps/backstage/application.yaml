@@ -52,11 +52,15 @@ spec:
                 guest:
                   dangerouslyAllowOutsideDevelopment: true
             
-            # Catalog templates location - points to catalog-info.yaml which lists all templates
-            catalog:
-              locations:
-                - type: file
-                  target: ../../templates/catalog-info.yaml
+            # Catalog loaded from Terraform ConfigMap
+            integrations:
+              github:
+                - host: github.com
+        
+        # Mount dynamic config from Terraform ConfigMap for catalog location
+        extraAppConfig:
+          - configMapRef: backstage-dynamic-config
+            filename: app-config.dynamic.yaml
         
         # Use ServiceAccount for Kubernetes API access
         serviceAccount:
