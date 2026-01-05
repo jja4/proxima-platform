@@ -10,3 +10,5 @@ spec:
     # Add new templates here as you create them:
     # - ./create-pipeline.yaml
     # - ./deploy-model.yaml
+  rules:
+    - allow: [Template]
