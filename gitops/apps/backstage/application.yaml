@@ -67,7 +67,8 @@ spec:
             # TechDocs configuration (required by Backstage)
             techdocs:
               builder: 'local'
-              generator: 'techdocs-node'
+              generator:
+                runIn: 'local'
               publisher:
                 type: 'local'
           
