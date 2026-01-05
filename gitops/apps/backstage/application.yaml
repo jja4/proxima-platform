@@ -63,6 +63,8 @@ spec:
             
             # Catalog location from environment variable
             catalog:
+              rules:
+                - allow: [Template, Component, API, Location, Resource, System, Domain, Group, User]
               locations:
                 - type: url
                   target: ${CATALOG_URL}
