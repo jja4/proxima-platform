@@ -29,12 +29,11 @@ spec:
               cpu: 500m
               memory: 1Gi
 
-          #Environment variables for backend auth
+          # Environment variables for backend auth
           extraEnvVarsSecrets:
           - backstage-backend-auth
 
-          # Base config - extended by mounted dynamic config
-          # All environment-specific config (auth, catalog, kubernetes) is in the dynamic ConfigMap
+          # Base config with guest authentication and catalog location
           appConfig:
             app:
               baseUrl: http://localhost:7007
@@ -45,12 +44,21 @@ spec:
                   - secret: ${BACKEND_SECRET}
               csp:
                 connect-src: ["'self'", 'http:', 'https:']
-          
-          # Additional config from mounted ConfigMap
-          extraAppConfig:
-          - filename: app-config.dynamic.yaml
-            configMapRef: backstage-dynamic-config
-            key: app-config.dynamic.yaml
+            
+            # Guest authentication for development
+            auth:
+              environment: development
+              providers:
+                guest:
+                  dangerouslyAllowOutsideDevelopment: true
+            
+            # Catalog templates location
+            catalog:
+              locations:
+                - type: file
+                  target: ../../templates/submit-job.yaml
+                  rules:
+                    - allow: [Template]
         
         # Use ServiceAccount for Kubernetes API access
         serviceAccount:
