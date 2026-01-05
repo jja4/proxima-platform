@@ -1,102 +1,101 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: test-compute
-  title: Test Compute Job
-  description: Run a simple test computation on the workload cluster
+  name: run-compute
+  title: Run Compute Job
+  description: Execute a computation on the workload cluster
   tags:
-    - test
     - compute
+    - test
 spec:
   owner: platform-team
   type: service
 
   parameters:
-    - title: Test Configuration
+    - title: Job Configuration
       required:
-        - jobName
+        - iterations
       properties:
-        jobName:
-          title: Job Name
-          type: string
-          description: Name for this test job
-          default: test-compute
         iterations:
           title: Iterations
           type: number
-          description: Number of computation iterations
+          description: Number of sqrt calculations
           default: 1000000
-        ttl:
-          title: TTL (seconds)
-          type: number
-          description: Time to live after completion
-          default: 300
+        cpu:
+          title: CPU Request
+          type: string
+          description: CPU allocation (e.g., 100m, 500m)
+          default: "100m"
+        memory:
+          title: Memory Request
+          type: string
+          description: Memory allocation (e.g., 128Mi, 256Mi)
+          default: "128Mi"
 
   steps:
-    - id: create-job
-      name: Create Test Job
-      action: kubernetes:apply
+    - id: generate-job-name
+      name: Generate Job Name
+      action: debug:log
       input:
-        cluster: workload-cluster
-        manifest: |
+        message: "Creating compute job with ${{ parameters.iterations }} iterations"
+
+  output:
+    text:
+      - title: "Step 1: Run This Command"
+        content: |
+          Switch to workload cluster and create the job:
+          ```bash
+          kubectl config use-context workload
+          kubectl create -f - <<'EOF'
           apiVersion: batch/v1
           kind: Job
           metadata:
-            name: ${{ parameters.jobName }}-${{ '' | now }}
+            generateName: compute-
             namespace: jobs
-            labels:
-              app: test-compute
-              test: "true"
           spec:
-            ttlSecondsAfterFinished: ${{ parameters.ttl }}
-            backoffLimit: 2
+            ttlSecondsAfterFinished: 300
             template:
               spec:
                 restartPolicy: Never
                 containers:
                 - name: compute
                   image: python:3.11-slim
-                  command:
-                    - python
-                    - -c
+                  command: ["python", "-c"]
+                  args:
                     - |
-                      import time
-                      import math
-                      
-                      print("=== Test Compute Job Starting ===")
-                      print(f"Job: ${{ parameters.jobName }}")
+                      import time, math
+                      print("=== Starting Computation ===")
                       print(f"Iterations: ${{ parameters.iterations }}")
-                      
                       start = time.time()
-                      result = 0
-                      for i in range(${{ parameters.iterations }}):
-                          result += math.sqrt(i)
-                      
+                      result = sum(math.sqrt(i) for i in range(${{ parameters.iterations }}))
                       duration = time.time() - start
-                      
                       print(f"\n=== Results ===")
-                      print(f"Sum of square roots: {result:,.2f}")
-                      print(f"Duration: {duration:.4f} seconds")
+                      print(f"Sum: {result:,.2f}")
+                      print(f"Duration: {duration:.4f}s")
                       print(f"Rate: {${{ parameters.iterations }}/duration:,.0f} ops/sec")
-                      print("=== Test Compute Job Complete ===")
                   resources:
                     requests:
-                      cpu: "500m"
-                      memory: "256Mi"
-                    limits:
-                      cpu: "1000m"
-                      memory: "512Mi"
+                      cpu: "${{ parameters.cpu }}"
+                      memory: "${{ parameters.memory }}"
+          EOF
+          ```
 
-  output:
-    text:
-      - title: Job Name
-        content: "${{ parameters.jobName }}-${{ '' | now }}"
-      - title: Next Steps
+      - title: "Step 2: Check Results"
         content: |
-          Run the following to see results:
+          View the latest job results automatically:
+          ```bash
+          # Get the most recent compute job logs
+          kubectl logs -n jobs $(kubectl get pods -n jobs -l job-name --sort-by=.metadata.creationTimestamp -o name | grep compute | tail -1)
           ```
-          kubectl logs -n jobs job/${{ parameters.jobName }}-${{ '' | now }}
+          
+          Or check all recent compute jobs:
+          ```bash
+          kubectl get jobs -n jobs --sort-by=.metadata.creationTimestamp | grep compute | tail -5
           ```
-    links:
-      - title: View Job in Cluster
-        url: https://backstage.proxima.platform/catalog
+
+      - title: "Quick Check"
+        content: |
+          Get latest job logs:
+          ```bash
+          kubectl logs -n jobs $(kubectl get pods -n jobs --sort-by=.metadata.creationTimestamp -o name | tail -1)
+          ```
