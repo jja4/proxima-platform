@@ -1,14 +1,78 @@
-apiVersion: backstage.io/v1alpha1
-kind: Location
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
 metadata:
-  name: proxima-templates
-  description: ML Platform Templates
+  name: submit-job
+  title: Submit Training Job
+  description: Submit a Ray training job to the workload cluster
+  tags:
+    - ml
+    - ray
+    - training
 spec:
-  type: url
-  targets:
-    - ./submit-job.yaml
-    # Add new templates here as you create them:
-    # - ./create-pipeline.yaml
-    # - ./deploy-model.yaml
-  rules:
-    - allow: [Template]
+  owner: platform-team
+  type: service
+
+  parameters:
+    - title: Job Details
+      required:
+        - workload
+        - version
+      properties:
+        workload:
+          title: Workload Name
+          type: string
+          description: Name of the workload (e.g., stellar_optimization)
+          enum:
+            - stellar_optimization
+        version:
+          title: Version
+          type: string
+          description: Container version tag (e.g., v1.0.0)
+          default: v1.0.0
+        ttl:
+          title: TTL (seconds)
+          type: number
+          description: Time to live after completion
+          default: 3600
+
+  steps:
+    - id: create-job
+      name: Create Kubernetes Job
+      action: kubernetes:apply
+      input:
+        cluster: workload-cluster
+        manifest: |
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            generateName: ${{ parameters.workload }}-
+            namespace: jobs
+            labels:
+              app: ${{ parameters.workload }}
+          spec:
+            ttlSecondsAfterFinished: ${{ parameters.ttl }}
+            backoffLimit: 3
+            template:
+              spec:
+                restartPolicy: Never
+                serviceAccountName: job-runner
+                containers:
+                - name: worker
+                  image: ${{ config.platform.region }}-docker.pkg.dev/${{ config.platform.projectId }}/ml-platform/${{ parameters.workload }}:${{ parameters.version }}
+                  env:
+                  - name: RAY_ADDRESS
+                    value: "ray://ray-cluster-head-svc.ray-system.svc.cluster.local:10001"
+                  - name: GCS_BUCKET
+                    value: "gs://${{ config.platform.projectId }}-ml-artifacts"
+                  resources:
+                    requests:
+                      cpu: "4"
+                      memory: "16Gi"
+                    limits:
+                      cpu: "8"
+                      memory: "32Gi"
+
+  output:
+    links:
+      - title: Job Logs
+        url: https://backstage.proxima.platform/catalog/default/component/${{ parameters.workload }}
