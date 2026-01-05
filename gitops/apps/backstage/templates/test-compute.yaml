@@ -1,0 +1,102 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: test-compute
+  title: Test Compute Job
+  description: Run a simple test computation on the workload cluster
+  tags:
+    - test
+    - compute
+spec:
+  owner: platform-team
+  type: service
+
+  parameters:
+    - title: Test Configuration
+      required:
+        - jobName
+      properties:
+        jobName:
+          title: Job Name
+          type: string
+          description: Name for this test job
+          default: test-compute
+        iterations:
+          title: Iterations
+          type: number
+          description: Number of computation iterations
+          default: 1000000
+        ttl:
+          title: TTL (seconds)
+          type: number
+          description: Time to live after completion
+          default: 300
+
+  steps:
+    - id: create-job
+      name: Create Test Job
+      action: kubernetes:apply
+      input:
+        cluster: workload-cluster
+        manifest: |
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: ${{ parameters.jobName }}-${{ '' | now }}
+            namespace: jobs
+            labels:
+              app: test-compute
+              test: "true"
+          spec:
+            ttlSecondsAfterFinished: ${{ parameters.ttl }}
+            backoffLimit: 2
+            template:
+              spec:
+                restartPolicy: Never
+                containers:
+                - name: compute
+                  image: python:3.11-slim
+                  command:
+                    - python
+                    - -c
+                    - |
+                      import time
+                      import math
+                      
+                      print("=== Test Compute Job Starting ===")
+                      print(f"Job: ${{ parameters.jobName }}")
+                      print(f"Iterations: ${{ parameters.iterations }}")
+                      
+                      start = time.time()
+                      result = 0
+                      for i in range(${{ parameters.iterations }}):
+                          result += math.sqrt(i)
+                      
+                      duration = time.time() - start
+                      
+                      print(f"\n=== Results ===")
+                      print(f"Sum of square roots: {result:,.2f}")
+                      print(f"Duration: {duration:.4f} seconds")
+                      print(f"Rate: {${{ parameters.iterations }}/duration:,.0f} ops/sec")
+                      print("=== Test Compute Job Complete ===")
+                  resources:
+                    requests:
+                      cpu: "500m"
+                      memory: "256Mi"
+                    limits:
+                      cpu: "1000m"
+                      memory: "512Mi"
+
+  output:
+    text:
+      - title: Job Name
+        content: "${{ parameters.jobName }}-${{ '' | now }}"
+      - title: Next Steps
+        content: |
+          Run the following to see results:
+          ```
+          kubectl logs -n jobs job/${{ parameters.jobName }}-${{ '' | now }}
+          ```
+    links:
+      - title: View Job in Cluster
+        url: https://backstage.proxima.platform/catalog
