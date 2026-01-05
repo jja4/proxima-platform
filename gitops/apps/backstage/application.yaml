@@ -33,6 +33,11 @@ spec:
           extraEnvVarsSecrets:
           - backstage-backend-auth
 
+          # Tell Backstage to load the dynamic config file
+          extraEnvVars:
+          - name: APP_CONFIG_app_config_files
+            value: "/app/app-config-from-configmap.yaml,/app/app-config.dynamic.yaml"
+
           # Mount the dynamic config from Terraform-managed ConfigMap
           extraVolumes:
           - name: dynamic-config
