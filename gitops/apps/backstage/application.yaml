@@ -45,6 +45,9 @@ spec:
                   - secret: ${BACKEND_SECRET}
               csp:
                 connect-src: ["'self'", 'http:', 'https:']
+              reading:
+                allow:
+                  - host: raw.githubusercontent.com
             
             # Guest authentication for development
             auth:
