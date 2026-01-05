@@ -63,6 +63,13 @@ spec:
               locations:
                 - type: url
                   target: ${CATALOG_URL}
+            
+            # TechDocs configuration (required by Backstage)
+            techdocs:
+              builder: 'local'
+              generator: 'techdocs-node'
+              publisher:
+                type: 'local'
           
           # Inject catalog URL from Terraform ConfigMap as environment variable
           extraEnvVars:
