@@ -19,7 +19,8 @@ spec:
           image:
             registry: ghcr.io
             repository: backstage/backstage
-            tag: latest
+            tag: "1.32.3"  # Pin version to avoid large downloads on each restart
+            pullPolicy: IfNotPresent
 
           resources:
             requests:
@@ -52,15 +53,24 @@ spec:
                 guest:
                   dangerouslyAllowOutsideDevelopment: true
             
-            # Catalog loaded from Terraform ConfigMap
+            # GitHub integration for loading templates
             integrations:
               github:
                 - host: github.com
-        
-        # Mount dynamic config from Terraform ConfigMap for catalog location
-        extraAppConfig:
-          - configMapRef: backstage-dynamic-config
-            filename: app-config.dynamic.yaml
+            
+            # Catalog location from environment variable
+            catalog:
+              locations:
+                - type: url
+                  target: ${CATALOG_URL}
+          
+          # Inject catalog URL from Terraform ConfigMap as environment variable
+          extraEnvVars:
+            - name: CATALOG_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: backstage-platform-config
+                  key: catalog_url
         
         # Use ServiceAccount for Kubernetes API access
         serviceAccount:

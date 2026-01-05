@@ -361,12 +361,13 @@ resource "kubectl_manifest" "backstage_platform_config" {
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: platform-config
+  name: backstage-platform-config
   namespace: backstage
 data:
   project_id: ${var.project_id}
   region: ${var.region}
   github_raw_base_url: ${trimsuffix(replace(var.git_repo_url, "github.com", "raw.githubusercontent.com"), ".git")}
+  catalog_url: ${trimsuffix(replace(var.git_repo_url, "github.com", "raw.githubusercontent.com"), ".git")}/${var.git_branch}/gitops/apps/backstage/templates/catalog-info.yaml
 YAML
   depends_on = [module.management_cluster]
 }
