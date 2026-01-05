@@ -4,10 +4,9 @@ metadata:
   name: proxima-templates
   description: ML Platform Templates
 spec:
+  type: url
   targets:
     - ./submit-job.yaml
     # Add new templates here as you create them:
     # - ./create-pipeline.yaml
     # - ./deploy-model.yaml
-  allowedKinds:
-    - Template
