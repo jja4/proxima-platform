@@ -30,6 +30,22 @@ spec:
               cpu: 500m
               memory: 1Gi
 
+          # Health checks - increase startup probe timeout for slower initialization
+          startupProbe:
+            failureThreshold: 10  # Allow 10 failures = 100 seconds for startup
+            periodSeconds: 10
+            timeoutSeconds: 2
+          
+          livenessProbe:
+            failureThreshold: 3
+            periodSeconds: 10
+            timeoutSeconds: 2
+          
+          readinessProbe:
+            failureThreshold: 3
+            periodSeconds: 10
+            timeoutSeconds: 2
+
           # Environment variables for backend auth
           extraEnvVarsSecrets:
           - backstage-backend-auth
