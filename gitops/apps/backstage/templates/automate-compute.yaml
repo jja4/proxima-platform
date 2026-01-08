@@ -1,0 +1,93 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: run-compute
+  title: Run Compute Job Automatically
+  description: Execute a computation automatically on the workload cluster
+  tags:
+    - compute
+    - kubernetes
+    - batch
+spec:
+  owner: platform-team
+  type: service
+
+  parameters:
+    - title: Job Configuration
+      required:
+        - iterations
+      properties:
+        iterations:
+          title: Iterations
+          type: number
+          default: 1000000
+        cpu:
+          title: CPU Request
+          type: string
+          default: "100m"
+        memory:
+          title: Memory Request
+          type: string
+          default: "128Mi"
+
+  steps:
+    # Step 1: Fetch and render the job template
+    - id: fetch-template
+      name: Render Job Template
+      action: fetch:template
+      input:
+        url: ./jobs
+        targetPath: ./rendered
+        values:
+          iterations: ${{ parameters.iterations }}
+          cpu: ${{ parameters.cpu }}
+          memory: ${{ parameters.memory }}
+
+    # Step 2: Apply the rendered manifest to the cluster
+    - id: apply-job
+      name: Apply Job to Cluster
+      action: kubernetes:apply
+      input:
+        clusterName: workload-cluster
+        manifestPath: ./rendered/job.yaml
+
+    # Step 3: Wait for job completion
+    - id: wait-for-job
+      name: Wait for Job Completion
+      action: kubernetes:wait
+      input:
+        clusterName: workload-cluster
+        namespace: jobs
+        resource:
+          apiVersion: batch/v1
+          kind: Job
+          name: compute
+        condition: Complete
+        timeout: 90
+
+    # Step 4: Fetch pod logs
+    - id: fetch-logs
+      name: Fetch Job Logs
+      action: kubernetes:logs
+      input:
+        clusterName: workload-cluster
+        namespace: jobs
+        selector:
+          job-name: compute
+
+  output:
+    text:
+      - title: Compute Job Completed Successfully
+        content: |
+          ✅ Your compute job has completed!
+          
+          **Configuration:**
+          - Iterations: ${{ parameters.iterations }}
+          - CPU: ${{ parameters.cpu }}
+          - Memory: ${{ parameters.memory }}
+
+      - title: Job Results
+        content: |
+          ```
+          ${{ steps['fetch-logs'].output.logs }}
+          ```

@@ -368,6 +368,7 @@ data:
   region: ${var.region}
   github_raw_base_url: ${trimsuffix(replace(var.git_repo_url, "github.com", "raw.githubusercontent.com"), ".git")}
   catalog_url: ${trimsuffix(replace(var.git_repo_url, "github.com", "raw.githubusercontent.com"), ".git")}/${var.git_branch}/gitops/apps/backstage/templates/catalog-info.yaml
+  workload_cluster_url: ${module.workload_cluster.cluster_endpoint}
 YAML
   depends_on = [module.management_cluster]
 }

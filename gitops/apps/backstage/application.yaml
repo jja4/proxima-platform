@@ -76,6 +76,19 @@ spec:
                 runIn: 'local'
               publisher:
                 type: 'local'
+            
+            # Kubernetes integration for scaffolder actions
+            kubernetes:
+              serviceLocatorMethod:
+                type: 'multiTenant'
+              clusterLocatorMethods:
+                - type: 'config'
+                  clusters:
+                    - name: workload-cluster
+                      url: ${WORKLOAD_CLUSTER_URL}
+                      authProvider: 'serviceAccount'
+                      skipTLSVerify: false
+                      skipMetricsLookup: true
           
           # Inject catalog URL from Terraform ConfigMap as environment variable
           extraEnvVars:
@@ -84,6 +97,12 @@ spec:
                 configMapKeyRef:
                   name: backstage-platform-config
                   key: catalog_url
+            - name: WORKLOAD_CLUSTER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: backstage-platform-config
+                  key: workload_cluster_url
+                  optional: true
         
         # Use ServiceAccount for Kubernetes API access
         serviceAccount:

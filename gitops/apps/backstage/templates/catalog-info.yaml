@@ -8,6 +8,7 @@ spec:
   targets:
     - ./submit-job.yaml
     - ./test-compute.yaml
+    - ./automate-compute.yaml
     # Add more templates here:
     # - ./create-pipeline.yaml
     # - ./deploy-model.yaml
