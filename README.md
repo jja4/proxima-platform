@@ -4,143 +4,113 @@
 
 Platform for distributed ML training on GCP with Kubernetes and Ray.
 
-## 🚀 Quick Start
+## 🚀 High Level Quick Start
 
-### Open in Dev Container (Recommended)
-
-The dev container is your complete development environment with all tools pre-installed.
+### 1. Deploy Platform (Infrastructure)
+The platform uses a **Dual-Cluster GitOps Architecture**:
+- **Management Cluster**: Runs ArgoCD, Backstage, Monitoring.
+- **Workload Cluster**: Runs Ray training jobs.
 
 ```bash
-# 1. Open repo in VS Code
-# 2. Click "Reopen in Container" when prompted
-# 3. Everything is ready - local Ray cluster, monitoring, CLI tools (CLI pre-installed)
+# 1. Open in VS Code Dev Container (Tools pre-installed)
+
+# 2. Deploy Infrastructure & Bootstrap GitOps
+cd terraform/envs/dev
+# Set your project_id in terraform.tfvars
+terraform init
+terraform apply
 ```
+*ArgoCD will automatically hydrate the clusters with applications (Grafana, Ray Operator, Backstage, etc.)*
 
-**From inside the dev container, you can:**
+### 2. Submit Training Jobs
+Once deployed, you need to **build** the workload image before submitting it to the **Workload Cluster**.
 
 ```bash
-# LOCAL: Test training code (no GCP needed)
-python docs/examples/stellar_optimization/train.py
+# 1. Connect to Clusters
+gcloud container clusters get-credentials ml-platform-workload  --region europe-west3
 
-# PRODUCTION: Deploy to GKE and submit jobs (cluster must exist first)
-gcloud auth login
-cd terraform/envs/dev && terraform apply    # build the GKE infra before submitting
+# 2. Build & Push Image
+ml-platform build stellar_optimization v1.0.0
+
+# 3. Submit Job
 ml-platform submit stellar_optimization:v1.0.0
 ```
 
-See **[docs/QUICKSTART.md](docs/QUICKSTART.md)** for complete setup guide.
+See **[docs/QUICKSTART.md](docs/QUICKSTART.md)** for the complete guide.
 
 ## 🏗️ Architecture
+
+The platform follows a strict separation of concerns using two GKE clusters managed by ArgoCD.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  Google Cloud Platform                                      │
 │                                                             │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │  GKE Cluster                                         │   │
-│  │                                                      │   │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐  │   │
-│  │  │ Ray Head    │  │ Ray Workers │  │ Monitoring   │  │   │
-│  │  │ (Dashboard) │  │ (CPU/GPU)   │  │ (Prom/Graf)  │  │   │
-│  │  └─────────────┘  └─────────────┘  └──────────────┘  │   │
-│  │                                                      │   │
-│  │  ┌─────────────────────────────────────────────────┐ │   │
-│  │  │  Training Jobs (K8s Jobs)                       │ │   │
-│  │  │  - Stellarator Optimization                     │ │   │
-│  │  │  - Hyperparameter Tuning                        │ │   │
-│  │  │  - Data Processing                              │ │   │
-│  │  └─────────────────────────────────────────────────┘ │   │
-│  └──────────────────────────────────────────────────────┘   │
-│                                                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌─────────────────┐    │
-│  │ Artifact     │  │ Cloud        │  │ Cloud           │    │
-│  │ Registry     │  │ Storage      │  │ Logging         │    │
-│  └──────────────┘  └──────────────┘  └─────────────────┘    │ 
-└─────────────────────────────────────────────────────────────┘
+│  ┌─────────────────────────────┐  ┌──────────────────────┐  │
+│  │  Management Cluster         │  │  Workload Cluster    │  │
+│  │  (Platform Services)        │  │  (Compute Resources) │  │
+│  │                             │  │                      │  │
+│  │  ┌────────┐  ┌───────────┐  │  │  ┌───────────┐       │  │
+│  │  │ ArgoCD │  │ Backstage │  │  │  │ Ray Op.   │       │  │
+│  │  └────────┘  └───────────┘  │  │  └───────────┘       │  │
+│  │                             │  │                      │  │
+│  │  ┌────────┐  ┌───────────┐  │  │  ┌───────────┐       │  │
+│  │  │Grafana │  │Crossplane │──┼──┼─►│ Ray Clstr │       │  │
+│  │  └────────┘  └───────────┘  │  │  └───────────┘       │  │
+│  └─────────────────────────────┘  └──────────────────────┘  │
+│              ▲                                              │
+└──────────────┼──────────────────────────────────────────────┘
+               │ (Syncs State)
+   ┌───────────┴──────────┐
+   │  GitOps Repository   │
+   │      (github)        │
+   └──────────────────────┘
 ```
+
+### Components
+- **GitOps (`/gitops`)**: ArgoCD manages all cluster state.
+- **Backstage**: Developer portal for creating and viewing jobs.
+- **Ray**: Distributed training framework running on the Workload Cluster.
+- **Crossplane**: Manages cloud resources (GCP buckets, SAs) from K8s.
 
 ## 📁 Project Structure
 
 ```
 proxima-platform/
 ├── .devcontainer/          # 🐳 VS Code dev container config
-│   ├── devcontainer.json   # Container settings, tools, extensions
-│   └── Dockerfile          # Container image
-├── ml-platform/
-│   ├── bin/
-│   │   └── ml-platform        # 🎯 Executable CLI script
-│   ├── cli/                # CLI implementation
-│   │   ├── main.py         # Command dispatcher
-│   │   └── commands/       # Each command in its own module
-│   │       ├── status.py
-│   │       ├── submit.py
-│   │       ├── build.py
-│   │       ├── logs.py
-│   │       ├── scale.py
-│   │       ├── port_forward.py
-│   │       └── list_jobs.py
-│   └── sdk/                # SDK for programmatic use
-│       └── core/           # Core SDK classes
-│           ├── client.py   # PlatformClient
-│           └── job.py      # Job class
-├── docs/
-│   ├── examples/           # 📚 Example workloads with documentation
-│   │   └── stellar_optimization/
-│   │       ├── README.md   # Guide to setup your own workload
-│   │       ├── train.py    # Training code
-│   │       ├── Dockerfile  # Container definition
-│   │       └── job.yaml    # Kubernetes manifest
-│   ├── QUICKSTART.md       # Getting started guide
-│   ├── DEV_GUIDE.md        # Local development & testing
-│   ├── LAUNCH_PLATFORM.md  # Infrastructure deployment guide
-│   └── USE_PLATFORM.md     # Operations & monitoring guide
-├── terraform/              # Infrastructure as Code
-├── kubernetes/             # Kubernetes manifests
-├── pyproject.toml          # Project config (dependencies, build)
-└── uv.lock                 # Lock file (reproducible installs)
+├── docs/                   # 📚 Documentation & Examples
+├── gitops/                 # ☸️  Source of Truth (ArgoCD Apps)
+│   ├── apps/               # Backstage (Internal Developer Portal), Grafana, KubeRay
+│   ├── argocd/             # Bootstrap configuration
+│   ├── clusters/           # Cluster-specific configs
+│   ├── infrastructure/     # Crossplane, Cert-Manager
+│   └── security/           # RBAC & Policies
+├── kubernetes/             # 📦 Raw manifests
+├── ml_platform/            # 🐍 Python CLI & SDK
+│   ├── cli/                # 'ml-platform' command tool
+│   └── sdk/                # Python client for jobs
+├── scripts/                # 🛠 Helper scripts
+└── terraform/              # ☁️  Base Infrastructure
+    ├── envs/dev/           # Deployment entrypoint
+    └── modules/            # Reusable modules
 ```
 
 
-## 🛠 Installation
+## 🛠 CLI Installation
 
-### Option 1: UV (Recommended)
+The `ml-platform` CLI is used by engineers and scientists to interact with the **Workload Cluster**.
+
+### Recommended: UV
 ```bash
-# Install uv
-curl -LsSf https://astral.sh/uv/install.sh | sh
-# Or: brew install uv
-
-# Install ml-platform (creates .venv, installs CLI)
 uv sync
-
-# Activate virtual environment
-source .venv/bin/activate  # macOS/Linux
-.venv\Scripts\activate     # Windows
-
-# Now 'ml-platform' command is available
+source .venv/bin/activate
 ml-platform status
 ```
 
-### Option 2: Legacy pip-compatible
-```bash
-pip install -e .
-ml-platform status
-```
 
-### Option 3: Add bin/ to PATH (no venv)
-```bash
-export PATH="$PWD/ml-platform/bin:$PATH"
-ml-platform status
-```
-
-### ✅ Clean CLI
-```bash
-ml-platform status                # Easy! 
-# vs
-python -m ml_platform.cli status  # Verbose 
-```
 
 ## 🎮 CLI Commands 
-> **Note:** These commands require a deployed GKE cluster. For local development, run Python scripts directly.
+> **Note:** Ensure you are connected to the **Workload Cluster** (`kubectl config use-context workload`)
 
 ```bash
 ml-platform status                           # Show ml-platform health
@@ -173,12 +143,45 @@ ml-platform port-forward grafana  # Grafana: http://localhost:3000
 ml-platform port-forward all      # All dashboards
 ```
 
+## 🎸 Backstage (Developer Portal)
+Backstage is the central portal for viewing jobs, documentation, and services.
+
+**To access Backstage:**
+1. Connect to the Management Cluster:
+   ```bash
+   kubectl config use-context management
+   ```
+2. Port-forward the service:
+   ```bash
+   kubectl port-forward -n backstage svc/backstage 7007:7007
+   ```
+3. Open **http://localhost:7007** in your browser.
+
+## ☸️ GitOps Workflow
+All cluster state is managed via GitOps (`gitops/` directory).
+
+1. **Modify State**: Edit files in `gitops/` (e.g., `gitops/apps/backstage/application.yaml`).
+2. **Commit**: Push changes to the `main` branch.
+3. **Sync**: ArgoCD automatically syncs changes to the clusters (usually within 3 minutes).
+
+*Open the ArgoCD UI to monitor:*
+```bash
+kubectl config use-context management
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+# Login at https://localhost:8080 (admin / password is a secret)
+
+# Retrieve password:
+kubectl -n argocd get secret argocd-initial-admin-secret -o jso
+npath='{.data.password}' | base64 --decode && echo ""
+
+```
+
 ## 🐍 SDK Usage
 
 ```python
 from ml_platform.sdk import PlatformClient
 
-# Create client
+# Client automatically connects to current kubecontext (Workload Cluster)
 client = PlatformClient(project_id="your-project")
 
 # Submit job
@@ -186,83 +189,12 @@ job = client.submit_job(
     name="training",
     image="europe-west3-docker.pkg.dev/project/repo/model:v1",
     cpu="8",
-    memory="32Gi",
-    env={"LEARNING_RATE": "0.001"}
+    memory="32Gi"
 )
-
-# Monitor
-print(job.status())
-job.wait(timeout=3600)
-print(job.logs())
-
-# Scale platform
-client.scale_ray(replicas=20)
 ```
-# 🏗 Infrastructure
-
-- **GCP**: GKE with autoscaling
-- **Kubernetes**: Ray operator, monitoring
-- **Ray**: Distributed computing
-- **Monitoring**: Prometheus + Grafana
-- **Storage**: Google Cloud Storage
-
-## 🚢 Deployment
-
-Follow [Launch Platform](docs/LAUNCH_PLATFORM.md) guide to deploy infrastructure.
-Once GCP is authenticated and a Service Account with proper permissions is set up, run:
-
-```bash
-# 1. Deploy infrastructure
-cd terraform/envs/dev
-terraform init
-terraform apply -var="project_id=YOUR_PROJECT"
-
-# 2. Connect to cluster
-gcloud container clusters get-credentials ml-platform-gke \
-  --region europe-west3 --project YOUR_PROJECT
-
-# 3. Verify
-ml-platform status
-```
-
-
-## 🎓 Creating Your Own Workload
-
-```bash
-# 1. Copy example
-cp -r docs/examples/stellar_optimization docs/examples/my_workload
-
-# 2. Edit files
-vim docs/examples/my_workload/train.py
-vim docs/examples/my_workload/Dockerfile
-
-# 3. Build & submit
-ml-platform build my_workload v1.0.0
-ml-platform submit my_workload:v1.0.0
-
-# 4. Monitor
-ml-platform logs my-workload-TIMESTAMP
-```
-
-## 📊 Monitoring
-
-```bash
-# Access dashboards
-ml-platform port-forward ray       # localhost:8265
-ml-platform port-forward grafana   # localhost:3000
-ml-platform port-forward all       # All dashboards
-
-# Job monitoring
-ml-platform list
-ml-platform logs job-name
-ml-platform status
-```
-
-
 ## 📚 Documentation
 
-- **[Quick Start](docs/QUICKSTART.md)** - 5-minute overview
-- **[Developer Guide](docs/DEV_GUIDE.md)** - Local development & testing
-- **[Launch Platform](docs/LAUNCH_PLATFORM.md)** - Terraform deployment & GCP setup
-- **[Use Platform](docs/USE_PLATFORM.md)** - Operations, monitoring, scaling
-- **[Example: Stellar Optimization](docs/examples/stellar_optimization/README.md)** -  Example workload
+- **[GitOps Guide](docs/GITOPS.md)** - How the dual-cluster architecture works.
+- **[Launch Platform](docs/LAUNCH_PLATFORM.md)** - Terraform setup guide.
+- **[Developer Guide](docs/DEV_GUIDE.md)** - Testing and contributing.
+- **[Example Workload](docs/examples/stellar_optimization/README.md)** - Training a Stellarator fusion model.
