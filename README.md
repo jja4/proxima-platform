@@ -144,6 +144,7 @@ ml-platform port-forward all      # All dashboards
 ```
 
 ## 🎸 Backstage (Developer Portal)
+# ![Backstage](docs/images/Backstage-screenshot.png)
 Backstage is the central portal for viewing jobs, documentation, and services.
 
 **To access Backstage:**
@@ -157,7 +158,8 @@ Backstage is the central portal for viewing jobs, documentation, and services.
    ```
 3. Open **http://localhost:7007** in your browser.
 
-## ☸️ GitOps Workflow
+## ☸️ GitOps
+# ![ArgoCD](docs/images/ArgoCD-screenshot.png)
 All cluster state is managed via GitOps (`gitops/` directory).
 
 1. **Modify State**: Edit files in `gitops/` (e.g., `gitops/apps/backstage/application.yaml`).
