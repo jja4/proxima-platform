@@ -49,6 +49,19 @@ spec:
                 allow:
                   - host: raw.githubusercontent.com
             
+            # Kubernetes backend plugin configuration
+            kubernetes:
+              serviceLocatorMethod:
+                type: multiTenant
+              clusterLocatorMethods:
+                - type: config
+                  clusters:
+                    - name: workload-cluster
+                      url: ${WORKLOAD_CLUSTER_URL}
+                      authProvider: serviceAccount
+                      serviceAccountToken: /var/secrets/workload-cluster/token
+                      skipTLSVerify: true
+            
             # Guest authentication for development
             auth:
               environment: development
@@ -97,6 +110,25 @@ spec:
                 configMapKeyRef:
                   name: backstage-platform-config
                   key: catalog_url
+            - name: WORKLOAD_CLUSTER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: backstage-platform-config
+                  key: workload_cluster_url
+          
+          # Mount workload cluster token as secret volume
+          extraVolumes:
+            - name: workload-cluster-token
+              secret:
+                secretName: backstage-workload-cluster
+                items:
+                  - key: token
+                    path: token
+          
+          extraVolumeMounts:
+            - name: workload-cluster-token
+              mountPath: /var/secrets/workload-cluster
+              readOnly: true
             - name: WORKLOAD_CLUSTER_URL
               valueFrom:
                 configMapKeyRef:

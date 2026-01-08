@@ -41,6 +41,12 @@ resource "helm_release" "argocd" {
     value = "false"  # We'll create the repo Secret via Terraform
   }
 
+  # Set faster sync interval (30s instead of default 3m)
+  set {
+    name  = "timeout.reconciliation"
+    value = "30s"
+  }
+
   # Wait for ArgoCD to be ready before applying GitOps manifests
   wait    = true
   timeout = 600
@@ -400,18 +406,6 @@ data:
       locations:
         - type: url
           target: ${trimsuffix(replace(var.git_repo_url, "github.com", "raw.githubusercontent.com"), ".git")}/${var.git_branch}/gitops/apps/backstage/templates/catalog-info.yaml
-    
-    kubernetes:
-      serviceLocatorMethod:
-        type: multiTenant
-      clusterLocatorMethods:
-        - type: config
-          clusters:
-            - url: https://${module.workload_cluster.cluster_endpoint}
-              name: workload-cluster
-              authProvider: serviceAccount
-              serviceAccountToken: ${data.kubernetes_secret.argocd_manager_token.data.token}
-              skipTLSVerify: true
 YAML
   depends_on = [
     module.management_cluster,
