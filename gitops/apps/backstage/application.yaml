@@ -129,12 +129,6 @@ spec:
             - name: workload-cluster-token
               mountPath: /var/secrets/workload-cluster
               readOnly: true
-            - name: WORKLOAD_CLUSTER_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: backstage-platform-config
-                  key: workload_cluster_url
-                  optional: true
         
         # Use ServiceAccount for Kubernetes API access
         serviceAccount:
