@@ -17,9 +17,9 @@ spec:
       values: |
         backstage:
           image:
-            registry: ghcr.io
-            repository: backstage/backstage
-            tag: "1.32.3"  # Pin version to avoid large downloads on each restart
+            registry: quay.io
+            repository: janus-idp/backstage-showcase
+            tag: "latest"
             pullPolicy: IfNotPresent
 
           resources:
