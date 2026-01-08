@@ -1,7 +1,7 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: run-compute
+  name: automate-compute
   title: Run Compute Job Automatically
   description: Execute a computation automatically on the workload cluster
   tags:
