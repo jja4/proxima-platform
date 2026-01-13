@@ -91,6 +91,13 @@ resource "kubectl_manifest" "argocd_bootstrap" {
   ]
 }
 
+# Wait for ArgoCD to sync CRDs (External Secrets, Crossplane)
+resource "time_sleep" "wait_for_crds" {
+  create_duration = "90s"
+
+  depends_on = [kubectl_manifest.argocd_bootstrap]
+}
+
 # Deploy AppProjects (Security Boundaries) first
 resource "kubectl_manifest" "platform_team_project" {
   yaml_body = file("${path.module}/../../../gitops/security/platform-team.yaml")
@@ -132,14 +139,53 @@ resource "kubernetes_secret" "management_cluster" {
   depends_on = [helm_release.argocd]
 }
 
-# Data source for fetching ArgoCD manager token from the workload cluster
-data "kubernetes_secret" "argocd_manager_token" {
+# Create argocd namespace on workload cluster
+resource "kubernetes_namespace" "argocd_workload" {
   provider = kubernetes.workload
+  metadata {
+    name = "argocd"
+  }
+  depends_on = [module.workload_cluster]
+}
 
+# Create argocd-manager service account on workload cluster
+resource "kubernetes_service_account" "argocd_manager_workload" {
+  provider = kubernetes.workload
+  metadata {
+    name      = "argocd-manager"
+    namespace = kubernetes_namespace.argocd_workload.metadata[0].name
+  }
+}
+
+# Create ClusterRoleBinding for argocd-manager
+resource "kubernetes_cluster_role_binding" "argocd_manager_workload" {
+  provider = kubernetes.workload
+  metadata {
+    name = "argocd-manager-role-binding"
+  }
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "ClusterRole"
+    name      = "cluster-admin"
+  }
+  subject {
+    kind      = "ServiceAccount"
+    name      = kubernetes_service_account.argocd_manager_workload.metadata[0].name
+    namespace = kubernetes_namespace.argocd_workload.metadata[0].name
+  }
+}
+
+# Create Token Secret for argocd-manager (needed for K8s 1.24+)
+resource "kubernetes_secret" "argocd_manager_token_workload" {
+  provider = kubernetes.workload
   metadata {
     name      = "argocd-manager-token"
-    namespace = "argocd"
+    namespace = kubernetes_namespace.argocd_workload.metadata[0].name
+    annotations = {
+      "kubernetes.io/service-account.name" = kubernetes_service_account.argocd_manager_workload.metadata[0].name
+    }
   }
+  type = "kubernetes.io/service-account-token"
 }
 
 # Create workload cluster registration Secret
@@ -161,7 +207,7 @@ resource "kubernetes_secret" "workload_cluster" {
     name   = "workload-cluster"
     server = "https://${module.workload_cluster.cluster_endpoint}"
     config = jsonencode({
-      bearerToken = data.kubernetes_secret.argocd_manager_token.data.token
+      bearerToken = kubernetes_secret.argocd_manager_token_workload.data.token
       tlsClientConfig = {
         insecure = false
         caData   = module.workload_cluster.cluster_ca_certificate
@@ -306,7 +352,10 @@ spec:
             namespace: external-secrets
 YAML
 
-  depends_on = [module.management_cluster]
+  depends_on = [
+    module.management_cluster,
+    time_sleep.wait_for_crds
+  ]
 }
 
 resource "kubectl_manifest" "crossplane_provider_config" {
@@ -321,7 +370,10 @@ spec:
     source: InjectedIdentity
 YAML
 
-  depends_on = [module.management_cluster]
+  depends_on = [
+    module.management_cluster,
+    time_sleep.wait_for_crds
+  ]
 }
 
 # RBAC for Crossplane StoreConfig (required for External Secret Stores if enabled, or general management)
@@ -410,7 +462,7 @@ YAML
   depends_on = [
     module.management_cluster,
     module.workload_cluster,
-    data.kubernetes_secret.argocd_manager_token
+    kubernetes_secret.argocd_manager_token_workload
   ]
 }
 
@@ -423,12 +475,12 @@ resource "kubernetes_secret" "backstage_workload_cluster" {
 
   data = {
     url   = "https://${module.workload_cluster.cluster_endpoint}"
-    token = data.kubernetes_secret.argocd_manager_token.data.token
+    token = kubernetes_secret.argocd_manager_token_workload.data.token
   }
 
   depends_on = [
     module.workload_cluster,
-    data.kubernetes_secret.argocd_manager_token
+    kubernetes_secret.argocd_manager_token_workload
   ]
 }
 
